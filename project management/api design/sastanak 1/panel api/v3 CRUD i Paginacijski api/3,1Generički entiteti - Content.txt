@@ -1,0 +1,271 @@
+3)
+--generički entiteti
+{entity}=multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers
+
+3.1)
+CONTENT
+--Content je osnovni sadržaj, koji ima tekst, multimediju,... (npr., Propovijed - 3NKG)
+--Sadržaj (Content) je organiziran hijerarhijski u kategorije (Category)
+	--poput datoteka i mapa u datotečnom sustavu
+--Content pripada nekoj regiji (npr., Hrvatska, Slovenija,..)
+
+MODEL
+
+//koristi se pri dohvatu sadržaja; ima "link" za multimediju
+Content
+{
+	"meta" : ContentMeta
+	"multimedia": Multimedia
+}
+ContentMeta
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"created": 1504971270,
+	"modified": 1504971270,
+	"author": "Don David A. Leskovar SDB",  //username
+}
+Multimedia
+{
+	"text":"Ovo je tekst",
+	"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+	"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+	"description": "Lectio Divina s Don Boscom",
+
+	"audio": [
+		{
+			"title": "",
+			"link": "",
+			"duration": "" //?koji je format? (broj sekundi?)
+		},
+		{
+			"title": "",
+			"link": "",
+			"duration": ""
+		}
+	],
+	"documents": [
+		{
+			"title": "",
+			"link": "",
+			"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+		},
+		{
+			"title": "",
+			"link": "",
+			"type": ""
+		}
+	],
+	"images": [
+		{
+			"title": "",
+			"link": ""
+		},
+		{
+			"title": "",
+			"link": ""
+		}
+	],
+	"video": [
+		{
+			"title": "",
+			"link": ""
+		},
+		{
+			"title": "",
+			"link": ""
+		}
+	],
+	"links": [
+		{
+			"title": "Web stranica HBK",
+			"link": "http://www.hbk.hr/"
+		},
+		{
+			"title": "",
+			"link": ""
+		}
+	]
+}
+Content - Puni prošireni model
+{
+	"meta" : {
+		"id": 5536,
+		"categoryId": 963,
+		"regionId": 1234,
+		"created": 1504971270,
+		"modified": 1504971270,
+		"author": "Don David A. Leskovar SDB",  //username
+	}
+	"multimedia": {
+		"text":"Ovo je tekst",
+		"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+		"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+		"description": "Lectio Divina s Don Boscom",
+
+		"audio": [
+			{
+				"title": "",
+				"link": "",
+				"duration": "" //?koji je format? (broj sekundi?)
+			},
+			{
+				"title": "",
+				"link": "",
+				"duration": ""
+			}
+		],
+		"documents": [
+			{
+				"title": "",
+				"link": "",
+				"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+			},
+			{
+				"title": "",
+				"link": "",
+				"type": ""
+			}
+		],
+		"images": [
+			{
+				"title": "",
+				"link": ""
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"video": [
+			{
+				"title": "",
+				"link": ""
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"links": [
+			{
+				"title": "Web stranica HBK",
+				"link": "http://www.hbk.hr/"
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		]
+	}
+}
+
+//koristi se pri spremanju/izmjeni/stvaranju sadržaja
+ContentWithFiles			//audio, images i documents umjesto "link" imaju "file"; video i links i dalje imaju "link"
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"created": 1504971270,
+	"modified": 1504971270,
+	"author": "Don David A. Leskovar SDB",  //username
+	
+	//MultimediaWithFiles
+	"multimedia": {
+		"text":"Ovo je tekst",
+		"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+		"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+		"description": "Lectio Divina s Don Boscom",
+	
+		"audio": [
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"duration": "" //?koji je format? (broj sekundi?)
+			},
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"duration": ""
+			}
+		],
+		"documents": [
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+			},
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"type": ""
+			}
+		],
+		"images": [
+			{
+				"title": "",
+				"file": MultipartFile		//umjesto "link":"string"
+			},
+			{
+				"title": "",
+				"file": MultipartFile		//umjesto "link":"string"
+			}
+		],
+		"video": [
+			{
+				"title": "",
+				"link": ""			//!! za video ostaje link				
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"links": [
+			{
+				"title": "Web stranica HBK",
+				"link": "http://www.hbk.hr/"	//!! za link ostaje link
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		]
+	}
+}
+--!!!Preporučujem za parsiranje JSONa u Panelu koristit isti Angular razred (Content), 
+	--koji ima i "link" i "file" atribute, a prikazuje/šalje onaj koji nije undefined
+
+REST API
+--dohvat sadržaja (npr., propovijed ili duhovnost)
+GET
+/{id}	--npr., ==/sermons/{id} | ==/spirituality/{id}
+RESPONSE
+{
+	Content
+}
+
+--stvaranje sadržaja (npr., propovijed ili duhovnost)
+POST
+/		--npr., == /spirituality
+REQUEST
+{
+	ContentWithFiles
+}
+--id=0 | undefined | null
+--predati odgovarajući superCategoryId i regionId i author(username) u Contentu
+
+--uređivanje sadržaja (npr., propovijed ili duhovnost)
+PUT
+/{id}		--npr., == /spirituality/{id}
+REQUEST
+{
+	ContentWithFiles
+}
+--predati odgovarajući superCategoryId i regionId i username u Contentu
+--"file"=undefined ako se ne mijenja multimedija
+
+--brisanje sadržaja (npr., propovijed ili duhovnost)
+DELETE
+/{id}		--npr., == /spirituality/{id}

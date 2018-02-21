@@ -1,0 +1,69 @@
+IDEJE ARHITEKTURA
+--skaliranje mservica za pojedinu regiju (1 instanca baze i svakog mservisa po regiji)
+--? kako to tehnički izvest?
+
+CMS po mikroservisima
+https://stackoverflow.com/questions/38554037/how-to-deal-with-shared-models-in-micro-service-architectures
+--To maintain encapsulation and separation of concerns, each service should have its own domain, that it is able to evolve independently from other services
+	--https://opencredo.com/7-deadly-sins-of-microservices/
+--Prijedlog 1 -- duplication via library (svaki ms svoja shema u bazi, al isti model)
+	--izgleda prihvatljivo
+	--mikroservisi su kao klijenti libraryja, nova verzija libraryja je kao nova verzija APIja, ne moraju 
+	svi klijenti odjednom preći na novu verziju
+	--samo je velik coupling između klijenta i cms libraryja (klijent se veže na PLL, DLL, BLL)
+--Prijedlog 2 -- interface (api) segregation via cms mservice (jedna shema za cms za sve mservice, jedna shema po mservicu za sve ostalo)
+	--polu anti pattern (shared db)
+--Prijedlog 3 -- hard coupling (jedna shema za sve mservice - svi joj pristupaju)
+	--anti pattern (shared db)
+--Prijedlog 4 -- duplication via library and interface (api) segregation via cms mservice
+	+minimalni coupling, minimalna duplikacija, db per servis, svi mikroservisi razdvojeni po čitavom stogu
+	--čitav CMS mservice je izdvojen u library i na centralnom je maven repozitoriju i importa se preko Mavena
+		--http://www.baeldung.com/deployable-fat-jar-spring-boot
+		--https://maven.apache.org/guides/mini/guide-central-repository-upload.html
+		--https://maven.apache.org/guides/mini/guide-3rd-party-jars-remote.html
+		--https://spring.io/guides/gs/multi-module/
+	--CMS sadrži vlastiti PLL sloj (kontrolere) i REST API -- taj REST API je sučelje koje je jedini coupling između konkretnog (npr., Song, Duhovnost) mservisa i CMS mservisa
+	--Prijedlog 1 -- CMSMservice se importa i pokreće se jedan Tomcat na kojem se nađu i kontroleri od CMS mservisa i od konkretnog MServisa
+		-CMS mservis će morati promijenit URLove zbog konflikta (najbolje da jednostavno doda prefix /cms)
+		-registriranjem konkretnog mservisa će se registrirat zapravo i cms dio
+		-ovaj pristup je moguć samo za servise koji podržavaju Maven (Java)
+			--izguglat: Maven ASP .NET, Maven java only
+		--cms nekako mora čitati environment varijable, gdje će dobit konekcijske parametre za bazu	-- možda je moguće da čita application.properties od vanjskog mservisa
+			-vezan je za PostgreSQL
+		+imamo 1 Tomcat (memorija, brzina poziva,..)
+		--izguglat: jel se može uopće importat tako library koji ima kontrolere i koji treba stvorit tablice u bazi,...
+	--Prijedlog 2 -- imamo 2 servera/mservisa za svaki konkretni mservis (npr., Song, Duhovnost)
+		--1 je CMSMservis, a drugi je konkretni MServisa
+		--pokreću se zasebno
+		--morali bi konfigurirat CMSMservis za svaki konkretni mservis -> npr., zasebna Spring Boot aplikacija, koja samo importa CMS library
+		--zapravo bi mogli napravit primjerak Spring Boot aplikacije CMSMservis, odnosno Maven jar ili docker sliku, koji se zasebno pokreće, 
+		a konfiguracijski parametri za spajanje na bazu se šalju izvana (environment varijable) - ovo je NUŽNO za servise koji koriste neku drugu tehnologiju
+
+	
+GENERIČKA IMPLEMENTACIJA
+--kontrolerski sloj se može implementirat generički i spremit također u library
+--i onda npr., Pjesmarica samo definira SongsController koji nasljeđuje CMS kontroller i overrida neke metode i doda prefix
+	--za čisti Content ovo je moguće:
+		--Definira se AbstractController bez @RequestMappinga na razini čitavog kontrolera
+		--i onda se može naslijediti DuhovnostController ili MultimediaController koji zapravo samo dodaju prefix sa @RequestMapping("/spirituality") na razini čitavog kontrolera
+			--https://www.mkyong.com/spring-mvc/spring-abstract-controller-example/
+		--SongsController može overridati AbstractController:
+			--dodati prefix sa @RequestMapping("/songs") na razini čitavog kontrolera
+			--ne može overridati metode, zato što im potpis nije isti (Content -> Song)
+				--može ih overloadati, ali onda ne može koristiti isti URL
+				--ZAKLJUČAK: SongsController mora definirati vlastite @RequestMapping metode za sve URLove
+--ako to nije moguće (jer se RequestMapping ne može overridati), onda je BLL i DLL sloj u libraryju i mogu se te metode pozivati i ti razredi naslijediti i nadograditi
+	--npr., SongsMService može koristiti ovaj BLL sloj za validaciju Contenta
+			--ali mora definirat zasebni za validaciju pjesama (SongsBLL, koji kompozira ContentBLL)
+ZAKLJUČAK
+	--u trenutku kad model mikroservisa divergira od generičkog modela postaje mu potreban specifični stog DLL, BLL, PLL 
+	(npr., Song je s tagovima divergirao od Content -> SongsController, SongsBLL, SongsDLL)
+		--to znači da specifični stog ne nasljeđuje generički stog, nego ga eventualno kompozira  -- jer SongsBLL nije poslovni sloj za Content, nego posl. sloj za pjesme
+		(SongsBLL može sadržavati ContentBLL za validaciju Content dijela pjesme,..)
+		--ali zar ne možemo implementirati Song nasljeđivanjem Contenta??
+			--Liskov Substitution principle bi mogao vrijediti kad bi kompoziciju (Song -> Content) zamijenili nasljeđivanjem 
+				--a možda je kompozicija čak bolja
+	--Ako model mikroservisa nije divergirao od generičkog modela, potreban mu je minimalan specifični stog DLL, BLL i PLL koji se može ostvariti nasljeđivanjem generičkog stoga
+		--(npr., Duhovnost == Content -> DuhovnostController nasljeđuje CMSController i dodaje prefiks, DuhovnostBLL nasljeđuje CMSBLL i eventualno overrida metode za validaciju sa nešto malo dodatne validacije, DuhovnostDLL overrida CMSDLL)
+		--DuhovnostBLL jest poslovni sloj za Content, pa onda vrijedi relacija nasljeđivanja za ContentBLL
+		

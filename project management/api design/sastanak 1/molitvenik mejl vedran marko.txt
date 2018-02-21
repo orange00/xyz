@@ -1,0 +1,51 @@
+Samo da se nadovežem i sažmem što je bitno za vas dvojicu (Marko, Vedran). 
+Prvo pročitajte retke označene s BITNO (da se ne izgubite u tekstu, ostalo je manje bitno :D)
+
+Šibo, pogledaj ovo označeno s IDEJA. To je ono što si jednom predložio preko telefona, 
+za stiliziranje teksta ostalih kategorija, pa samo provjeri jesam li te dobro shvatio?
+
+Dakle, što se tiče arhitekture:
+1) BITNO molitve mičemo sa klijenta na server 
+        -uz keširanje na klijentu, korisnik neće ni primjetit razliku, samo je potrebno inicijalno povuć molitve sa servera
+         -i eventualno bilo kakve promjene (ali to će biti dosta rijetko, jer se molitve neće često mijenjati)
+2) Molitvenik će na serveru funkcionirat kao i bilo koja druga (npr., Duhovnost ili Multimedija,..) Kategorija (cid, entitet)
+              -što znači da je Molitvenik jedna kategorija (cid, folder) koja (inicijalno) ima 24 "molitve" (Uvod, Obrasci vjere, Osnove molitve,...)
+               -Jedna "molitva" nije ništa drugo nego jedan Content (node)
+3) BITNO Api za Molitvenik je isti kao i za sve druge Kategorije 
+         -što znači da možete generički implementirat stvari za Molitvenik kao i za ostale kategorije
+         -API ćemo dogovorit na radnom sastanku za definiciju API-ja (uskoro)
+4) BITNO Pri dohvatu jedne molitve (content, node), dohvaćate JSON objekt;
+          -JSON je iste strukture kao i za sve ostale (totalno generičke) Kategorije
+          -BITNO strukturu JSONa ćemo dogovorit na radnom sastanku za definiciju API-ja; pošaljem uskoro prijedloge
+          -BITNO čitav tekst (html) molitve će biti u jednom atributu unutar JSONa (npr., "text")
+
+Što se tiče prezentacije:
+5) BITNO Definiran je poseban CSS, koji se primjenjuje na taj tekst molitve
+         -BITNO HTML tekstovi su konfigurirani tako da CSS klase očekuju u fajlu (relativna putanja u odnosu na html fajl): "../css/TextTypeStyles.css"
+6) CSS fajl će se možda isto moći dinamički dohvatiti sa servera preko posebnog URL-a
+          -kako bi mogli mijenjati izgled molitava u budućnosti
+7) IDEJA Također, u razradi je ideja da tekstove ostalih kategorija stiliziramo pomoću HTMLa i CSSa
+    -zato što se trenutno tekstovi prikazuju dosta bazično - što ne izgleda baš lijepo
+    -u tom slučaju bi svaka kategorija mogla imati svoj CSS, koji se primjenjuje na tekst te kategorije
+    -ali nisam siguran hoćemo li ovo raditi; ja ću napravit jedan prijedlog pa možemo raspravit 
+na sastanku
+
+Što se dizajna tiče:
+8) BITNO izbornik je različit nego u ostalim kategorijama
+   -vidi privitak Molitvenik-Dizajn.zip/Molitvenik/MolitvenikIzbornik
+   -ostalo iz Dizajn.zip nije za vas bitno i riješeno je preko CSSa
+9) BITNO što se prikaza HTML teksta molitve tiče, samo trebate izvući HTML iz JSONa (npr. json.text atribut) i primjenit CSS na njega
+    -IDEJA u osnovi, budemo li koristili CSS za sve kategorije, prikaz teksta molitve će biti isti 
+kao i prikaz teksta bilo koje druge kategorije
+
+Pozdrav,
+Mate
+	
+	
+          -??jel ovo bitno njima napominjat sad - moram prvo razmislit oće se moć to tako (oće trebat 
+			obavit konverziju tekstova,..., jel to moguće)
+		  -?raspravit ovo zajedno na sastanku - tipa, jel to uopće dobro rješenje?
+		  -?onda mogu generički dizajnirat Content da očekuje CSS 
+			-?potreban je posebno razradit ideju za keširanje tog CSSa
+				-?ili uključit "presentation" kao atribut kategorije
+		  

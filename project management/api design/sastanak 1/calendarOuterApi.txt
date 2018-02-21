@@ -1,0 +1,109 @@
+=======================REQUEST=======================
+//Calendar request
+//TODO: Embed arguments in URL
+GET api.novaeva.com/calendar/startDate
+{
+    "startDate": "2017-03-23"
+    "endDate": "2017-03-23"
+}
+=======================RESPONSE======================
+{
+    "weeks": [
+        {
+            "startDate": "",
+            "liturgicalWeek": 21,
+            "liturgicalTime": 3
+        },
+        {
+            "startDate": "",
+            "liturgicalWeek": 24,
+            "liturgicalTime": 5
+        }
+    ],
+    "days": [
+        "2017-03-23": {
+            "colour": 4,
+            "saints": ["sv. Ivan Bosco"],
+            "solemnity": "Ime Isusovo",
+            "feastDay": null
+        },
+        "2017-03-23": {
+            "colour": 2,
+            "saints": ["sv. Ivan Bosco"],
+            "solemnity": null,
+            "feastDay": "sv. Josip"
+        }
+    ]
+}
+=====================================================
+
+=======================REQUEST=======================
+//Readings request
+GET api.novaeva.com/calendar/2017-03-23/readings
+=======================RESPONSE======================
+{
+    "ligurgicalYear": "A",
+    "readings": [
+        {
+            "readingType": 2
+            "bibleVerse": "",
+            "theme": "",
+            "text": ""
+        },
+        {
+            "readingType": 2
+            "bibleVerse": "",
+            "theme": "",
+            "text": ""
+        }
+    ]
+}
+
+=======================REQUEST=======================
+//Media request
+GET api.novaeva.com/calendar/2017-03-23/media
+=======================RESPONSE======================
+{
+    "audio": [
+        {
+            "title": "",
+            "link": "",
+            "duration": ""
+        },
+        {
+            "title": "",
+            "link": "",
+            "duration": ""
+        }
+    ],
+    "documents": [
+        {
+            "title": "",
+            "link": ""
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+    ],
+    "images": [
+        {
+            "title": "",
+            "link": ""
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+    ],
+    "video": [
+        {
+            "title": "",
+            "link": ""
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+    ]
+}

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xsd:element name="category" type="categoryType"/>
+
+  <!-- categoryType definition -->
+  <xsd:complexType name="categoryType">
+	  <xsd:sequence>
+		<!-- Kategorija moze a ne mora imat reprezentativnu sliku -->
+		<xsd:element name="image" type="imageType" minOccurs="0"/>
+		
+		<xsd:element name="subcategories">
+			<xsd:complexType>
+				<!-- minOccurs="0" maxOccurs="unbounded" -->
+				<xsd:sequence>
+					<xsd:element name="category" type="simpleCategoryType" minOccurs="0" maxOccurs="unbounded"/>
+				</xsd:sequence>
+				<xsd:attribute name="size" type="xsd:nonNegativeInteger" use="required"/> 
+			</xsd:complexType>
+		</xsd:element>
+		
+		<xsd:element name="contents">
+			<xsd:complexType>
+				<!-- minOccurs="0" maxOccurs="unbounded" -->
+				<xsd:sequence>
+					<xsd:element name="content" type="contentType" minOccurs="0" maxOccurs="unbounded"/>
+				</xsd:sequence>
+				<xsd:attribute name="size" type="xsd:nonNegativeInteger" use="required"/> 
+			</xsd:complexType>
+		</xsd:element>		
+	  </xsd:sequence>
+	  
+	  <xsd:attribute name="id" type="xsd:nonNegativeInteger" use="required"/>
+	  <xsd:attribute name="supercategory" type="xsd:nonNegativeInteger"/>
+	  <xsd:attribute name="title" type="xsd:string"/>
+	  <!-- Pagination -->
+	  <xsd:attribute name="page" type="xsd:nonNegativeInteger"/>
+	  <xsd:attribute name="items" type="xsd:nonNegativeInteger"/>
+	  <!-- Mozda za filter uvest ogranicenje (0 i 1) -->
+	  <xsd:attribute name="filter" type="xsd:nonNegativeInteger"/>
+  </xsd:complexType>
+  
+  <!-- simpleCategoryType is used when referencing category (eg., subcategories) -->
+  <xsd:complexType name="simpleCategoryType">
+	<xsd:attribute name="id" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+  <!-- Multimedia Type definition -->
+   <xsd:complexType name="basicTextMultimediaType">
+	<xsd:simpleContent>
+		<xsd:extension base="xsd:string">
+			<xsd:attribute name="role" type="xsd:string"/>
+		</xsd:extension>
+	</xsd:simpleContent> 
+  </xsd:complexType>
+  <xsd:complexType name="basicMultimediaType">
+	<xsd:simpleContent>
+		<xsd:extension base="xsd:anyURI">
+			<xsd:attribute name="role" type="xsd:string"/>
+		</xsd:extension>
+	</xsd:simpleContent> 
+  </xsd:complexType>
+  <xsd:complexType name="imageType">
+	<xsd:simpleContent>
+		<xsd:extension base="basicMultimediaType">
+			<xsd:attribute name="width" type="xsd:positiveInteger"/>
+			<xsd:attribute name="height" type="xsd:positiveInteger"/>
+		</xsd:extension>
+	</xsd:simpleContent>
+  </xsd:complexType>
+  
+  <!-- contentType definition -->
+  <xsd:complexType name="contentType">
+	  <xsd:sequence>
+		<xsd:element name="author" type="xsd:nonNegativeInteger"/>
+		<xsd:element name="category" type="simpleCategoryType"/>
+		
+		<xsd:element name="region">
+			<xsd:complexType>
+				<xsd:simpleContent>
+					<xsd:extension base="xsd:nonNegativeInteger">
+						<xsd:attribute name="primaryLanguage" type="xsd:nonNegativeInteger"/> 
+					</xsd:extension>
+				</xsd:simpleContent>
+			</xsd:complexType>
+		</xsd:element>	
+
+		<!-- Multimedia grouped by language -->
+		<xsd:element name="multimedias">
+			<xsd:complexType>
+				<xsd:sequence>
+					<xsd:element name="multimedia" minOccurs="0" maxOccurs="unbounded">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="title" type="basicTextMultimediaType" minOccurs="0"/>
+								<xsd:element name="description" type="basicTextMultimediaType" minOccurs="0"/>
+								<xsd:element name="text" type="basicTextMultimediaType" minOccurs="0"/>
+								<!-- <xsd:element name="html" type="basicTextMultimediaType" minOccurs="0"/> -->
+								
+								<xsd:element name="audio" type="basicMultimediaType" minOccurs="0"/>
+								<xsd:element name="image" type="imageType" minOccurs="0"/>
+								<xsd:element name="video" type="basicMultimediaType" minOccurs="0"/>
+								<xsd:element name="link" type="basicMultimediaType" minOccurs="0"/>
+							</xsd:sequence>
+							
+							<xsd:attribute name="language" type="xsd:nonNegativeInteger"/>
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:complexType>
+		</xsd:element>		
+	  </xsd:sequence>
+	  
+	  <xsd:attribute name="id" type="xsd:nonNegativeInteger" use="required"/>
+	  <xsd:attribute name="primaryLanguage" type="xsd:nonNegativeInteger"/>
+  </xsd:complexType>
+</xsd:schema>

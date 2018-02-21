@@ -1,0 +1,133 @@
+2)
+{entity}=administration
+
+2.1)
+--REGIJE
+--Regija je poseban kanal u aplikaciji (npr., za Sloveniju, Hrvatsku,..)
+--Regija ima svoj sadržaj(Content) i kategorije(Category) za svaki entitet(songs|multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers|calendar)
+--Regija ima stog upravljackih korisnika s razlicitim pravima pristupa nad regijom i sadržajem regije
+
+
+Region
+{
+	"id" : 1,
+	"title":"Hrvatska salezijanska provincija",
+	"description" : "Salezijanci SDB Hrvatska"
+}
+
+--dohvat svih regija
+GET
+/regions
+RESPONSE
+[Region,...]
+
+--dohvat regije (osnovnih informacija)
+GET
+/regions/{id}
+RESPONSE
+{
+	Region
+}
+
+--stvaranje regije -> automatski se stvara stog upravljackih korisnika regije
+POST
+/regions
+REQUEST
+{
+	Region
+}
+--id=0 | undefined | null
+
+--uredivanje regije
+PUT
+/regions/{id}
+REQUEST
+{
+	Region
+}
+
+--brisanje regije -- efektivno se brišu i upravljacki korisnici regije
+DELETE
+/regions/{id}
+
+--REGIJE
+
+2.2)
+--USERS
+--User je upravljacki korisnik regije
+--Uloge i prava pristupa:
+			--FULLADMIN 
+				--programer, potpuni pristup sustavu, upravljanje konfiguracijom mikroservisa, direktni pristup evictu keša,...;direktni pristup bazi,...
+			--SYSTEMADMIN
+				--Šibo; stvara administratore regija i System WRITERe; 
+				--ovlasti nad svim sadržajem svih regija
+			--SYSTEMMODERATOR
+				--službeni moderatorski tim NoveEve; ovlasti nad svim sadržajem svih regija
+			--REGIONADMIN
+				--stvara Region moderatore; ovlasti nad tagovima pjesama pojedine regije
+			--REGIONMODERATOR
+				--objavljivaci sadržaja pojedine regije; ovlasti nad svim sadržajem te regije
+			--DELETED
+				--bivši korisnik; radi identifikacije autora sadržaja
+	
+USER 
+{
+	"id":1025,
+	"username":"Don David A. Leskovar SDB",
+	"email":"donDavid@salezijanci.hr",
+	"regionId": 1,
+	"role": "REGIONMODERATOR",
+}
+
+--dohvat svih korisnika
+GET
+/users
+URL PARAMS: ?regionId={id regije}
+	--ako se ne preda regionId dohvacaju se svi korisnici -> koje može dohvatiti trenutni korisnik
+		--SYSTEMADMIN -> svi korisnici
+		--REGIONADMIN -> svi korisnici regije
+		--ostali -> ništa
+RESPONSE
+[User,..]
+	
+--dohvat korisnika
+GET
+/users/{id}
+RESPONSE
+{
+	User
+}
+
+--stvaranje korisnika
+POST
+/users
+REQUEST
+{
+	User
+}
+--id=0 | undefined | null
+--predati odgovarajuci regionId i role u User
+
+--uredivanje korisnika
+PUT
+/users/{id}
+REQUEST
+{
+	User
+}
+
+--brisanje korisnika -- ne briše se sadržaj tog korisnika
+DELETE
+/users/{id}
+
+
+2.2.1)
+--ROLES
+--dohvat svih postojecih uloga
+GET
+/roles
+RESPONSE
+["FULLADMIN","REGIONMODERATOR",..]
+--ROLES	
+
+--USERS

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="trans.xsl"?>
+<category id="355" title="Songs" page="1" items="7" filter="0" supercategory="27">
+
+<image width="640" height="720">https://novaeva.com/songs/image/files/Slava-Bogu-na-visini.png</image>
+
+<subcategories size="3">
+	<category id="452"/>
+	<category id="593"/>
+	<category id="921"/>
+</subcategories>
+
+<contents size="7">
+	<content id="1284" primaryLanguage='5'>
+
+		<!-- -autor, atributi contenta, dateovi,... -->
+
+		<!-- Author id -->
+		<author>
+			1543
+		</author>
+		
+		
+		<!-- Timestamp -->
+		<!--
+		<created></created>	
+
+		<modifier>1837</modifier>
+		<modified></modified>
+		-->
+
+		<category id="355"/>
+
+		<region primaryLanguage='5'>
+			1
+		</region>
+
+		<!--
+		<tags>
+			<tag>WAMP</tag>
+			...
+		</tags>
+		-->
+
+		<multimedias>
+			<multimedia language="7">
+				<title role="title">Slava Bogu na visini</title>
+				<description role="description">Liturgijska</description>
+				<text role="Obicni tekst pjesme">
+				
+					
+				</text>
+				
+				<!-- <html role="chords"></html> -->
+				
+				<audio>https://novaeva.com/songs/audio/files/Slava-Bogu-na-visini.mp3</audio>
+								<image width="640" height="720">https://novaeva.com/songs/image/files/Slava-Bogu-na-visini.png</image>
+				<video>https://novaeva.com/songs/video/files/Slava-Bogu-na-visini.mp4</video>
+				<link role="content link">https://novaeva.com/api/content/1284</link>
+				
+				<!--
+				<documents>
+					<document>
+						<type>PDF</type>
+						<link>https://novaeva.com/songs/documents/files/Slava-Bogu-na-visini.pdf<link>
+					</document>
+					
+					...
+				</documents>
+				-->
+
+			</multimedia>
+			
+			<!-- ... -->
+		</multimedias>
+	</content>
+	<!-- ... -->
+</contents>
+
+</category>

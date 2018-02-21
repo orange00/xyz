@@ -1,0 +1,105 @@
+MEJL 1
+
+Pozdrav, 
+
+kao što sam najavio, šaljem prvi dio prijedloga APIja novog sustava.
+
+Osnovna motivacija za izgradnju novog sustava su neki uviđeni problemi starog 
+sustava koje ćemo pokušati riješiti. 
+
+Cilj je izgradnja sustava koji će biti dugotrajno održiv, proširiv, 
+siguran, skalabilan i razumljiv novim i starim programerima Nove Eve.
+
+API
+Sa novim backendom prelazimo sa monolitne na mikroservisnu arhitekturu
+i sa inačice APIja v2 na testne inačice APIja v3 i v4. 
+Finalno, testne inačice će biti spojene u stabilnu inačicu APIja v5.
+
+Kod nove arhitekture, svaki entitet(root kategorija: pjesmarica|multimedija|duhovnost|izreke|propovijedi|aktualno|poziv|odgovori|molitvenik|kalendar|generalno) 
+je zaseban mikroservis za kompletnim vlastitim stogom: baza-podaci, backend servisi, REST API.
+
+To znači da svaki entitet ima "zaseban" REST API, dohvatljiv preko root simboličke konstante entiteta: songs|multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers|calendar|general
+Npr., novaeva.com/api/v3/sermons/categories/0/include-subs za dohvat Propovijedi,
+        novaeva.com/api/v3/spirituality/categories/483/include-subs za dohvat Duhovnost->Lectio Divina
+        ...
+
+
+API v3
+Kao i API v2 (trenutno u uporabi), API v3 je paginacijski (straničenje) API.
+
+Mijenja se model straničenja (dohvat mlađih vijesti od zadanog datuma -> dohvat stranice page={broj stranice} & items={broj elemenata na stranici}).
+
+Mijenja se model podataka (JSONa u odgovoru, parametara u zahtjevu). Cilj je bio ispraviti neke greške i 
+nekonzistentnosti starog modela APIja i osmisliti generičan i proširiv novi model APIja.
+
+Osnovni (generički) model su: Content(vijest) i Category(skupina vijesti).
+
+Pri parsiranju modela preporučujem koristiti neki alat za ObjectMapping.
+
+Proširenje modela
+Osnovna ideja je mogućnost divergencije pojedinih entiteta od generičkog modela. Odnosno, cilj je 
+da se na jednostavan način pojedine entitete može proširivati, bez da se proširuju svi entiteti (npr., 
+želimo dodati akorde i note u Pjesme, ali ne i u Izreke ili Duhovnost).
+A da se pritom i novi prošireni entitet očuva što bližim generičkom modelu, radi jednostavnije 
+obrade, parsiranja, prikaza, dizajna, spremanja, keširanja, dohvata,...
+
+Generički (Content i Category) model podataka je tako za neke (specifične) entitete proširen dodatnim atributima.
+
+U prvom redu tu imamo pjesmaricu (Song = Content + akordi + tagovi pjesama).
+Dodatno imamo kalendar (totalna divergencija od generičkog Contenta).
+
+Dodatno, Molitvenik mičemo sa klijenta na poslužitelj i uvodimo generički model podataka 
+za Molitvenik, uz specifični prikaz HTML teksta molitava (više na sastanku).
+
+API za Klijente
+Api za klijente (Android, iOS, WinPhone, WEB) je u prilogu. 
+Možete malo proučiti to prije sastanka, a na sastanku ću detaljnije proći kroz API i 
+objasniti "šta je pisac htio reći".
+Također, na sastanku možemo dodatno raspraviti o idejama, prijedlozima, kritikama, 
+greškama u APIju ako ih primjetite itd.
+
+
+Nove funkcionalnosti
+Osim pjesama i kalendara, 2 su velike nove funkcionalnosti koje bi htjeli uvesti u aplikaciju:
+1) Proširenje na druga područja (skupine, države) - Uvođenjem regija (Region, regionId) - Pogledaj API u prilogu
+        Sadržaj svakog entiteta je podijeljen u kanale (regije) i korisnik preko aplikacije na mobitelu pristupa "svojoj" regiji.
+        Aplikacija to postiže slanjem ?regionId={id odabrane regije} u GET zahtjevima
+        Potrebno je dogovoriti mehanizam "biranja" regije na mobitelu.
+
+2) Keširanje na klijentu - Keširanje određenog broja vijesti na klijentu - da se ne moraju isti podaci učitavati svaki put kad korisnik otvori aplikaciju
+        API podrška za keširanje na klijentu (API v4), upute i objašnjenja stižu u sljedećem mejlu (u roku 24h nadam se).
+
+
+Novi panel
+Također, bit će napravljeno i novo administratorsko korisničko sučelje u izvedbi Angular Radak.
+API za panel (panel API v3) i prijedloge mockup ekrana šaljem također naknadno (u roku 24h nadam se).
+To neću slat svima, nego samo onima koga se tiče.
+
+
+Srdačan pozdrav,
+Mate
+
+P.S. Najbezbolniji način za "čitati" REST API u prilogu je prvo pročitati opis na početku, onda pronaći tekst "rest api" i proučiti to i po potrebi 
+proučiti definirani Model.
+
+
+MEJL 2
+
+UPOTREBA PAGINACIJSKOG APIja
+Možda nisam bio najjasniji kako se točno koristi Paginacijski API(v3) (što je zapravo najbitnija stvar :D).
+
+Dakle, zamislimo aplikaciju na mobitelu. 
+Kad korisnik otvori (klikne na) pojedini entitet (root kategorija: pjesmarica|multimedija|duhovnost|izreke|propovijedi|aktualno|poziv|odgovori|molitvenik|kalendar|generalno)
+ili neku kategoriju (mapu), prvo se uputi HTTP GET zahtjev za prvom stranicom:
+GET novaeva.com/api/v3/{entity}/categories/{categoryId}/include-subs?page=1&items={broj vijesti na stranici}
+
+Neka je {broj vijesti na stranici}=20. Ovaj parametar je dan slobodno na implementaciju klijentu. A može se i izostaviti, u kojem slučaju se vraća DEFAULT=20 vijesti.
+
+Pri prvom pozivu se dohvaća prva stranica. 
+Prva stranica uvijek sadrži SVE podkategorije (mape) tražene kategorije 
+i prvih (najnovijih) 20 vijesti.
+
+Mobitel treba kao i do sad prikazati tih 20 vijesti i sve kategorije (mape) u listi. 
+
+Kako korisnik scrolla prema dolje, kada dođe do zadnje učitane vijesti (ili kategorije), dohvaća se sljedeća stranica:
+GET novaeva.com/api/v3/{entity}/categories/{categoryId}/include-subs?page=1&items={broj vijesti na stranici}

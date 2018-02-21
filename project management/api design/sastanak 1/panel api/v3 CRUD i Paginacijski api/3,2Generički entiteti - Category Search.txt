@@ -1,0 +1,399 @@
+3)
+--generički entiteti
+{entity}=multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers
+
+3.2)
+CATEGORY
+--Kategorija (Category) je skupina sadržaja (npr., mapa Lectio Divina)
+--Kategorije su hijerarhijski organizirane
+--Kategorija ima podkategorije(subcategories) i sadržaj(content)
+--Kategorija ima svoj neki opisnik(features) sa informacijama, naslovom, opisom, multimedijom,...
+--Kategorija pripada nekoj regiji (npr., Hrvatska, Slovenija,..)
+
+MODEL
+
+--Kategorija (Category) sa (Subs) podkategorijama(subcategories) i sadržajem(content)
+--koristi se pri dohvatu kategorije radi pregleda sadržaja kategorije
+CategoryWithSubs
+{	
+	"features" : Content,
+	"subcategories": [CategoryInfo,..],
+	"content": [Content,...]
+}
+CategoryInfo
+{
+	"id": "1178",
+	"title": "Duhovnost"
+}
+CategoryWithSubs - Puni prošireni model
+{	
+	"features" : {
+		"meta" : {
+			"id": 5536,
+			"categoryId": 963,
+			"regionId": 1234,
+			"created": 1504971270,
+			"modified": 1504971270,
+			"author": "Don David A. Leskovar SDB",  //username
+		}
+		"multimedia": {
+			"text":"Ovo je tekst",
+			"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+			"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+			"description": "Lectio Divina s Don Boscom",
+
+			"audio": [
+				{
+					"title": "",
+					"link": "",
+					"duration": "" //?koji je format? (broj sekundi?)
+				},
+				{
+					"title": "",
+					"link": "",
+					"duration": ""
+				}
+			],
+			"documents": [
+				{
+					"title": "",
+					"link": "",
+					"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+				},
+				{
+					"title": "",
+					"link": "",
+					"type": ""
+				}
+			],
+			"images": [
+				{
+					"title": "",
+					"link": ""
+				},
+				{
+					"title": "",
+					"link": ""
+				}
+			],
+			"video": [
+				{
+					"title": "",
+					"link": ""
+				},
+				{
+					"title": "",
+					"link": ""
+				}
+			],
+			"links": [
+				{
+					"title": "Web stranica HBK",
+					"link": "http://www.hbk.hr/"
+				},
+				{
+					"title": "",
+					"link": ""
+				}
+			]
+		}
+	},
+	"subcategories": [
+		{
+			"id": "1178",
+			"title": "Duhovnost"
+		},
+		...
+	],
+	"content": [
+		{
+			"meta" : {
+				"id": 5536,
+				"categoryId": 963,
+				"regionId": 1234,
+				"created": 1504971270,
+				"modified": 1504971270,
+				"author": "Don David A. Leskovar SDB",  //username
+			}
+			"multimedia": {
+				"text":"Ovo je tekst",
+				"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+				"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+				"description": "Lectio Divina s Don Boscom",
+
+				"audio": [
+					{
+						"title": "",
+						"link": "",
+						"duration": "" //?koji je format? (broj sekundi?)
+					},
+					{
+						"title": "",
+						"link": "",
+						"duration": ""
+					}
+				],
+				"documents": [
+					{
+						"title": "",
+						"link": "",
+						"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+					},
+					{
+						"title": "",
+						"link": "",
+						"type": ""
+					}
+				],
+				"images": [
+					{
+						"title": "",
+						"link": ""
+					},
+					{
+						"title": "",
+						"link": ""
+					}
+				],
+				"video": [
+					{
+						"title": "",
+						"link": ""
+					},
+					{
+						"title": "",
+						"link": ""
+					}
+				],
+				"links": [
+					{
+						"title": "Web stranica HBK",
+						"link": "http://www.hbk.hr/"
+					},
+					{
+						"title": "",
+						"link": ""
+					}
+				]
+			}
+		},
+		...
+	]
+}
+
+--koristi pri dohvatu kategorije radi administracije kategorije
+Category
+{ 
+	Content
+}
+Category - Puni prošireni model
+{
+	"meta" : {
+		"id": 5536,
+		"categoryId": 963,
+		"regionId": 1234,
+		"created": 1504971270,
+		"modified": 1504971270,
+		"author": "Don David A. Leskovar SDB",  //username
+	}
+	"multimedia": {
+		"text":"Ovo je tekst",
+		"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+		"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+		"description": "Lectio Divina s Don Boscom",
+
+		"audio": [
+			{
+				"title": "",
+				"link": "",
+				"duration": "" //?koji je format? (broj sekundi?)
+			},
+			{
+				"title": "",
+				"link": "",
+				"duration": ""
+			}
+		],
+		"documents": [
+			{
+				"title": "",
+				"link": "",
+				"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+			},
+			{
+				"title": "",
+				"link": "",
+				"type": ""
+			}
+		],
+		"images": [
+			{
+				"title": "",
+				"link": ""
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"video": [
+			{
+				"title": "",
+				"link": ""
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"links": [
+			{
+				"title": "Web stranica HBK",
+				"link": "http://www.hbk.hr/"
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		]
+	}
+}
+
+//koristi se pri spremanju/izmjeni/stvaranju kategorije
+CategoryWithFiles			//audio, images i documents umjesto "link" imaju "file"; video i links i dalje imaju "link"
+{
+	ContentWithFiles
+}
+ContentWithFiles
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"created": 1504971270,
+	"modified": 1504971270,
+	"author": "Don David A. Leskovar SDB",  //username
+	
+	//MultimediaWithFiles
+	"multimedia": {
+		"text":"Ovo je tekst",
+		"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+		"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+		"description": "Lectio Divina s Don Boscom",
+	
+		"audio": [
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"duration": "" //?koji je format? (broj sekundi?)
+			},
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"duration": ""
+			}
+		],
+		"documents": [
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+			},
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"type": ""
+			}
+		],
+		"images": [
+			{
+				"title": "",
+				"file": MultipartFile		//umjesto "link":"string"
+			},
+			{
+				"title": "",
+				"file": MultipartFile		//umjesto "link":"string"
+			}
+		],
+		"video": [
+			{
+				"title": "",
+				"link": ""			//!! za video ostaje link				
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"links": [
+			{
+				"title": "Web stranica HBK",
+				"link": "http://www.hbk.hr/"	//!! za link ostaje link
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		]
+	}
+}
+--!!!Preporučujem za parsiranje JSONa u Panelu koristit isti Angular razred (Category==Content), 
+	--koji ima i "link" i "file" atribute, a prikazuje/šalje onaj koji nije undefined
+	
+
+
+REST API
+
+--dohvat kategorije sa sadržajem i podkategorijama (include-subs)
+--za root kategoriju svakog entiteta id=0
+--paginacija za "podsadržaj" (items={broj elemenata na jednoj stranici}, page={broj stranice})
+GET
+/categories/{id}/include-subs			--npr: novaeva.com/api/v3/sermons/categories/483/include-subs
+URL PARAMS: page=1 & items=20
+			&region=4
+RESPONSE
+{
+	CategoryWithSubs
+}
+
+--tražilica po osnovnom queriju; uz paginaciju
+GET
+/categories/{id}/search/include-subs
+URL PARAMS: page=1 & items=20 
+			&region=4
+			&query="Tekst pretrage"
+{
+	CategoryWithSubs
+}
+	
+--dohvat kategorije bez podkategorija i podsadržaja
+GET
+/categories/{id}			--npr., == /spirituality/categories/{id}
+URL PARAMS: ?regionId={id regije}
+RESPONSE
+{
+	Category //==Content
+}
+
+--stvaranje kategorije
+POST
+/categories							--npr., == /spirituality/categories
+REQUEST
+{
+	CategoryWithFiles //==ContentWithFiles
+}
+--id=0 | undefined | null
+--predati odgovarajući superCategoryId i regionId i author(username) u Category
+
+--uređivanje kategorije
+PUT
+/categories/{id}					--npr., == /spirituality/categories/{id}
+REQUEST
+{
+	CategoryWithFiles //==ContentWithFiles
+}
+--predati odgovarajući superCategoryId i regionId i username u Category
+--"file"=undefined ako se ne mijenja multimedija
+
+--brisanje kategorije -- efektivno se brišu i podkategorije i podsadržaj
+DELETE
+/categories/{id}					--npr., == /spirituality/categories/{id}

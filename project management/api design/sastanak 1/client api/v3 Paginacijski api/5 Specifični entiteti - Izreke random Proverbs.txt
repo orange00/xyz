@@ -1,0 +1,17 @@
+5)
+{entity}=proverbs
+
+5.1)		
+MODEL
+--model izreka je čisti Content
+--izreke dodatno nude REST API za dohvat RANDOM izreke
+
+REST API
+	
+--dohvat jedne random izreke
+GET
+/random					//ie. /proverbs/random
+RESPONSE
+{
+	Content
+}

@@ -1,0 +1,162 @@
+4)
+{entity}=songs
+
+4.1)
+SONG
+--pjesma je isto što i sadržaj, samo još ima AKORDE i dvorazinske tagove(SongTags)
+SONGTAGS
+--dvorazinski tagovi pjesama
+	--npr:
+		--VRSTA
+			--Liturgijska
+			--Worship
+		--Prigoda
+			--Misa
+			--Klanjanje
+
+			
+MODEL
+
+--Pjesma, sa sadržajem, tagovima i akordima
+//koristi se pri dohvatu pjesama; ima "link" za multimediju
+SongContent
+{
+	"tags":SongTags,
+	"chords":"Ovo je HTML string s akordima",
+	"content":Content
+}
+--koristiti Map<String,String> ili Dictionary<String,String> za parsiranje, zbog dinamickih kljuceva
+SongTags
+{
+	"SongSupertagTitle":["SongTagTitle1","SongTagTitle2",...],
+	"Prigoda":["Misa","Klanjanje","Pomirenje",..],
+	...
+}
+SongContent - Puni prošireni model
+{
+	"tags":{
+		"SongSupertagTitle":["SongTagTitle1","SongTagTitle2",...],
+		"Prigoda":["Misa","Klanjanje","Pomirenje",..],
+		...
+	},
+	"chords":"Ovo je HTML string s akordima",
+	"content":{
+		"meta" : {
+			"id": 5536,
+			"categoryId": 963,
+			"regionId": 1234,
+			"created": 1504971270,
+			"modified": 1504971270,
+			"author": "Don David A. Leskovar SDB",  //username
+		}
+		"multimedia": {
+			"text":"Ovo je tekst",
+			"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+			"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+			"description": "Lectio Divina s Don Boscom",
+
+			"audio": [
+				{
+					"title": "",
+					"link": "",
+					"duration": "" //?koji je format? (broj sekundi?)
+				},
+				{
+					"title": "",
+					"link": "",
+					"duration": ""
+				}
+			],
+			"documents": [
+				{
+					"title": "",
+					"link": "",
+					"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+				},
+				{
+					"title": "",
+					"link": "",
+					"type": ""
+				}
+			],
+			"images": [
+				{
+					"title": "",
+					"link": ""
+				},
+				{
+					"title": "",
+					"link": ""
+				}
+			],
+			"video": [
+				{
+					"title": "",
+					"link": ""
+				},
+				{
+					"title": "",
+					"link": ""
+				}
+			],
+			"links": [
+				{
+					"title": "Web stranica HBK",
+					"link": "http://www.hbk.hr/"
+				},
+				{
+					"title": "",
+					"link": ""
+				}
+			]
+		}
+	}
+}
+
+//koristi se pri spremanju/izmjeni/stvaranju pjesme
+SongContentWithFiles
+{
+	"tags":SongTags,
+	"chords":"",
+	"content":ContentWithFiles
+}
+--!!!Preporučujem za parsiranje JSONa u Panelu koristit isti Angular razred (Content), 
+	--koji ima i "link" i "file" atribute, a prikazuje/šalje onaj koji nije undefined
+	
+	
+
+REST API
+	
+--dohvat pjesme
+GET
+/{id}		--npr., == /songs/{id}
+URL PARAMS: ?regionId={id regije}
+RESPONSE
+{
+	SongContent
+}
+
+--stvaranje pjesme
+POST
+/		--npr., == /songs
+REQUEST
+{
+	SongContentWithFiles
+}
+--id=0 | undefined | null
+--predati odgovarajući superCategoryId i regionId i author(username) u pjesmi
+
+--uređivanje pjesme
+PUT
+/{id}		--npr., == /songs/{id}
+REQUEST
+{
+	SongContentWithFiles
+}
+--predati odgovarajući superCategoryId i regionId i username u Contentu
+
+--brisanje pjesme
+DELETE
+/{id}		--npr., == /songs/{id}
+
+

@@ -1,0 +1,1977 @@
+WinPhone i Android imaju dobre JSON object mappere (gson, Jackson, JsonConvert)
+Ima li IOS ikakve dovoljno dobre? (OCMapper?,JTObjectMapping?,restkit?)
+	--nevjerojatno kako je komplicirano to napravit za iOS
+	--jedino https://github.com/evermeer/EVReflection nudi automatski ObjectMapping za SWIFT
+		--poslat mejl, pitat
+
+/ = novaeva.com/api/v{broj_verzije}/{entity}
+--? novaeva.com/api/v0 = novaeva.com/api ili novaeva.com/api/v{trenutno aktualna verzija} = novaeva.com/api
+{entity} = songs|multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers|calendar...   --entitet kojem se pristupa
+
+----Generički sadržaj
+--?paginacija je v3 apija, changes je v4 apija
+PAGINACIJA je potrebna?
++za web klijente (oni neće imat keširanje)
++za vanjske klijente
++za mobilne klijente ako/dok neće uspjet implementirat client-side caching
+	+postupna prilagodba
+
+
+
+--jedan content
+	-jel potrebno:
+		-klijenti će ovo možda koristit (ako /changes vraća samo id-jeve), a možda ne (ako kroz changes vraća sav sadržaj)
+		+trebalo bi se interno koristit
+		+dobro je za analizu apija
+		+dobro je imati za cjelovitost apija
+	-šta još treba dodati:
+		-autor?, tagovi?,
+/{id}	--npr., ==/songs/{id} | ==/spirituality/{id}
+RESPONSE
+--STARI -> http://novaeva.com/json?api=2&nid=5536
+-Ja bih uklonio ove "SIGNALNE" stvari iz RESPONSA
+{
+	"APIstatus": 2,
+	"rezultat": 0,
+	"prilozi": [
+		{
+			"naziv": "XXIII. NEDJELJA KROZ GODINU (A) - LECTIO DIVINA SDB.pdf",
+			"url": "http://novaeva.com/datoteke/dokumenti/XXIII.%20NEDJELJA%20KROZ%20GODINU%20%28A%29%20-%20LECTIO%20DIVINA%20SDB.pdf"
+		}
+	],
+	"image": null,
+	"tekst": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+	"nid": 5536,
+	"cid": "963",
+	"naslov": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+	"youtube": "http://novaeva.com/node/5536",
+	"audio": null,
+	"time": "1504971270"
+}
+--Prijedlog 1 -> CONTENT; specifična multimedija
+	--POPRAVKE: maknute signalne stvari; svi nazivi na engl; idjevi su brojevi; vremena su brojevi; null->nema atributa;
+	--DODANO: regija, modified, description
+	--IZMJENE: time->created; youtube->link
+	--datumi (created, modified) trebaju biti u istom formatu kao i za sve ostalo
+	-Ovakav način spremanja multimedije je ograničavajući
+	  -bez promjene apija (nova verzija; nije backwards compatible):
+		-ne možemo u budućnosti uvest višejezičnost 
+		+možemo dodavati nove vrste dokumenata
+		-ne možemo dodavati nove vrste multimedije
+		-!ne možemo uvesti metapodatke multimedije (npr., naslov, trajanje audija,...)
+			-ovo nam već treba (kalendar)
+				+možemo imati poseban API (SPECIFIC ili v2) za kalendar i ostale stvari koje se ne uklapaju u ovaj api
+				-ne možemo isti api koristit za kalendar i za sve ostalo
+				--htio bih moći nakaliti kalendar u Content radi keširanja na jednom mjestu
+					+moguće izvesti na DLL razini; i da pritom imamo različit
+						--DLL struktura:
+						  DLLCachingProxy (mservice)
+							--DLL caching proxy backend kešira ContentDLL
+							DLLSourceProxy (mservice)
+								--SOURCE proxy odlučuje gdje se prosljeđuju pozivi (na CMS ili neki vanjski servis)
+									--kako vršit tu odluku
+										--1. možda bi on mogao hardkodirat (if /kalendar -> poziv na IP1, if /content -> poziv na IP2)
+										--BOLJA OPCIJA 2. druga opcija je da PLUGIN servisi sami dojave svoju lokaciju SOURCE proxyju
+											--npr., SOURCE proxy je EUREKA server i servisi se registriraju na njega
+												--npr., napravimo calendarPluginMService koji: 
+												  --registrira vanjsku uslugu kalendara na SourceProxy
+													--EUREKA valjda nudi neki api za ovakvo nešto
+												  --pretvara model kalendara u generički model nad ContentDLL
+													--definiramo za svaki takav specifični entitet (npr.,kalendar, pjesmarica)
+														--kakav će taj model biti (npr., jedan ContentDLL je pjesma, ostatak liste je hijerarhijska struktura tagova pjesama)
+														--te definiramo konverziju specific<->generic
+														+dobro se uklapa u DB per service i u outsorcane servise
+														+keširanje se može izvesti na jednom mjestu (za ContentDLL)
+														-zahtjeva puno posla pri dodavanju novog entiteta 
+															-PluginMService za konverziju specific->generic (radi keširanja)
+															-i opet PresentationMService za konverziju generic->specific (radi apija)
+								--i sve pakira u ContentDLL, koji je dovoljno generičan da može sve pohraniti
+					+izvesti tako da imamo samo po jedan mikroservis za svaki entitet
+						--npr., CalendarMService, SongMService, GenericMService, AuthorizationMService, RadioMService
+						--možda stavit i za sve generične entitete: DuhovnostMService, MultimediaMService,..., MolitvenikMServis
+							+moguće specijalizirati pojedini entitet, moguće skalirati pojedini entitet, sigurnost od ispada u slučaju fatalnih grešaka (greška u podacima kod nekog entiteta) i izmjena pojedinih entiteta
+								+specijalizirati pojedini entitet (npr., izreke random, pjesmarica tagovi i akordi, moguća buduća - propovijedi kategorizacija po svećeniku) - dodati posebne funkcionalnosti bez mijenjanja (izuzetno značajno - za 10 godina neće nitko razumijet tolik moj kod da bi išo mijenjat jezgru - uvjerili se sa postojećim sustavom) postojećeg CMSa
+						--i da koristimo npr., DB per service
+							--posebna baza za svaki servis ili OVO-zajednička baza sa privatnim tablicama
+						--zajednički kod MServisi dijele preko libraryja
+							--http://blog.scottlogic.com/2016/06/13/code-reuse-in-microservices-architecture.html
+							--https://stackoverflow.com/questions/4955635/how-to-add-local-jar-files-to-a-maven-project
+								--rješenje 2
+							--https://stackoverflow.com/questions/364114/can-i-add-jars-to-maven-2-build-classpath-without-installing-them
+							--https://maven.apache.org/guides/mini/guide-central-repository-upload.html
+						--MServis svakog entiteta ima Prezentacijski sloj, Poslovni sloj i Podatkovni sloj
+							--Prezentacijski sloj se brine za API
+								--npr., SongPLL, ContentPLL
+							--Poslovni sloj se brine za poslovnu logiku (npr., pretraživanje)
+								--npr., ContentBLL
+								--npr., autorizacija pristupa
+									--npr., poslovni sloj može biti autorizacijski proxy nad Spring data
+									--pozivom provjera iz autorizacijskog librarija provjera jel korisnik smije pristupit regiji
+							--Podatkovni sloj se brine za interakciju s bazom
+								--npr., Spring Data
+								--keširanje (@Cacheable), dodavanje/update vrijednosti iz keša (@CachePut), brisanje vrijednosti iz keša (@CacheEvict)
+									--keširanje se radi nad Spring Data
+										--https://docs.spring.io/spring/docs/3.1.x/spring-framework-reference/html/cache.html
+										--https://stackoverflow.com/questions/13914480/how-to-add-cache-feature-in-spring-data-jpa-crudrepository
+											--solution 2
+											--koristiti "key=#parametar|result.id"
+										--jedini problem je što ne radi keširanje nad find(), findAll() i findPage() tako da ide u isti keš	
+											--https://stackoverflow.com/questions/47803120/spring-caching-not-working-for-findall-method
+											--može se riješiti upotrebom dviju anotacija nad metodom koja vraća listu
+												--ovime se pri svakom dohvatu stranice ona dohvati iz keša i onda se keš resetira (za ključ zadanu kombinaciju firstName,surname,age)
+													--pri izmjeni nekog elementa, samo će prvi dohvat stranice vratit neispravan rezultat (ostali dohvati vraćaju ispravan rezultat)
+														+ovo mi se čini prihvatljivo
+														+možda napravit neki mehanizam refresha
+														+možda još proguglat (pagination caching)
+												--  @CacheEvict(value = "employeesPaginationCache", beforeInvocation = false)
+													@Cacheable(value = "employeesPaginationCache")
+													public List<Person> evictAndFindEmployees(String firstName, String surname, int age)
+								--Prijedlog 1- custom repository metoda se koristi za CRUD onog dijela pjesme koji je generic. Ta metoda poziva GenericMService
+									--npr., saveSong(song)
+										--tagsRepository.saveSongTags(song.id,song.tags)
+										--contentRepository.saveContent(song.content)
+									-nije DB per service, nego ima shared tablica i ima privatnih tablica
+									-single collapse point za aplikaciju
+									-svi su entiteti u istoj tablici (sporo)
+									-koja je uopće poanta da radimo MServise onda?
+										-Shared DB je praktički antipattern za Mikroservisnu arhitekturu
+									+nema dupliciranja tog koda
+								--Prijedlog 2 - potpuni DB per service - bolji pristup
+									--https://plainoldobjects.com/2015/09/02/does-each-microservice-really-need-its-own-database-2/
+										-yes
+									--dio koda koji upravlja tablicom content (npr., Spring repositorij, Content JPA entity, upravljanje promjenama) se dijeli između MServisa kao library
+										-trebat će nać način kako upogonit Spring Data repozitorij iz libraryja, ali to bi se trebalo moć (npr., tako da se proširi posebnim sučeljem)
+										-kako će funkcionirat stablo promjena, posebno za tagove pjesama
+											-možda da ipak tagove pjesama spremamo preko contenta?
+									--može se koristiti
+										--Database per service 
+											-previše resursa nepotrebno
+										--BOLJE Schema per servis
+											+manje resursa
+											+relativno lako migrirat na DB per service u slučaju rasta broja korisnika
+									+svi entiteti imaju svoje CMS tablice (brzo)
+									+svi entiteti (Mservisi) imaju svoje keševe
+									+svi Mservisi entiteta se mogu zasebno skalirat
+									+prelaskom na Database per service se baza može zasebno skalirat za svaki entitet
+									+content nije single collapse point za aplikaciju
+									--skaliranje mikroservisa uz backend caching
+										--rješenje NIJE korištenje CachingProxyja (npr., unutar Zuula)
+										--mora se koristiti distribuirani keš (npr., Hazelcast)
+										--?distribuirani cache otkriva sve instance i za sve instance koristi jedan zajednički keš (zapravo nije nego koristi replicirani keš po instancama kojeg transparentno sinkronizira - kao kod ROVKP onih struktura)
+											--!!?valjda će ovo radit sa docker instancama (zato što je to ista IP adresa i isti port) - treba izguglat, isprobat, provjerit
+											--i onda transparentno radi keširanje i invalidaciju keša
+										--Hazelcast
+											--!!omogućuje transparentno korištenje Spring cache anotaacija kao da se radi o jednoj instanci
+											--ima besplatnu OpenSource verziju i plaćenu (enterprise) verziju
+											
+											--http://docs.hazelcast.org/docs/latest/manual/html-single/index.html#annotation-based-spring-cache-configuration
+											--docker scaling diže nove instance na novim portovima / pritom ne smije biti naveden port u docker-compose? (kako to radi s eurekom onda ?)
+												--https://github.com/docker/compose/issues/1241
+												--https://github.com/docker/compose/issues/722
+												--odličan tutorial za Deployment Docker Zuul Eureka, docker scaling:
+													--https://blog.codecentric.de/en/2017/05/ansible-docker-windows-containers-scaling-spring-cloud-netflix-docker-compose/
+														--mikroservis ne mora eureki dati svoj port (npr., https://github.com/jonashackt/cxf-spring-cloud-netflix-docker/blob/master/weatherservice/src/main/resources/application.yml)
+														--u docker-compose, mikroservisi koje želimo skalirati trebaju imati dinamički external port
+															--npr: weatherbackend:
+																	  build: ./weatherbackend
+																	  ports:
+																	   - "8090"
+																	  tty:
+																		true
+																	  restart:
+																		unless-stopped
+														--internal port (8090) je isti kao server.port iz application.yml
+															--https://github.com/jonashackt/cxf-spring-cloud-netflix-docker/blob/master/weatherbackend/src/main/resources/application.yml
+														--jednostavno skaliranje: docker-compose scale weatherbackend=3 weatherservice=2
+														--rezultat: https://blog.codecentric.de/files/2017/05/eureka-showing-also-scaled-services.png
+															
+											--hazelcast cluster member discovery via eureka discovery:
+												--http://docs.hazelcast.org/docs/latest/manual/html-single/index.html#eureka-cloud-discovery
+												--https://github.com/hazelcast/hazelcast-eureka
+													--isti hazelcast cluster <=> isti hazelcast name
+												--hoće radit dinamičko (bez gašenja instanci) skaliranje instanci i hazelcast eureka discovery? - istestirat
+													--https://github.com/hazelcast/hazelcast-code-samples/tree/master/hazelcast-integration/springboot-eureka-partition-groups
+											
+											-https://stackoverflow.com/questions/41880524/microservices-based-architecture-and-individual-cache-for-each-node
+											-https://stormpath.com/blog/build-spring-boot-api-hazelcast-cached-user-authentication
+											-https://blog.hazelcast.com/spring-boot/
+											-https://opencredo.com/spring-booting-hazelcast/
+								-Jedini bottleneck i collapse point postaje AuthorizationMService
+									+ovo je donekle prihvatljivo
+									--ovo se može riješit jedino replikacijom svih autoriz. podataka po bazi, npr., event mehanizmima (izguglat)
+								
+							
+											
+						+puno jednostavnija arhitektura 
+							+alternativa se jako zakomplicirala (previše Mservisa, previše resursa, predug lanac poziva)
+							
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"created": 1504971270,
+	"modified": 1504971270,
+	"documents": [
+		{
+			"title": "XXIII. NEDJELJA KROZ GODINU (A) - LECTIO DIVINA SDB.pdf",
+			"link": "http://novaeva.com/datoteke/dokumenti/XXIII.%20NEDJELJA%20KROZ%20GODINU%20%28A%29%20-%20LECTIO%20DIVINA%20SDB.pdf"
+		}
+	],
+	
+	//Multimedia
+	"image": null,
+	"text":"Ovo je tekst",
+	"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+	"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+	"description": "Lectio Divina s Don Boscom",
+	"link": "http://novaeva.com/node/5536",
+	"audio": null
+}
+--Prijedlog 1.5 -> specifična proširiva multimedija
+	+frontend na jednostavan način može konstruirat objektni model s nasljeđivanjem za pojedine tipove multimedije
+	+polja omogućavaju da npr., u jednoj vijesti za Propovijed-5NKG budu 3 audija za "Šibalić|Kurkut|Leskovar" ili da jedna pjesma ima više audio datoteka s različitim izvedbama ili...
+	+jedinstven format za Content i za Kalendar
+	+jedinstven format za sve tipove multimedije (dokumenti su već u polju)
+	+proširivost (lako je dodavati nove meta atribute, npr., "width" i "height" za sliku)
+	-većina Contenta ima samo po jedan audio/video,...
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"created": 1504971270,
+	"modified": 1504971270,
+	
+	"text":"Ovo je tekst",
+	"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+	"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+	"description": "Lectio Divina s Don Boscom",
+	
+	//Multimedia
+    "audio": [
+        {
+            "title": "",
+            "link": "",
+            "duration": "" //?koji je format? (broj sekundi?)
+        },
+        {
+            "title": "",
+            "link": "",
+            "duration": ""
+        }
+    ],
+    "documents": [
+        {
+            "title": "",
+            "link": "",
+			"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+        },
+        {
+            "title": "",
+            "link": "",
+			"type": ""
+        }
+    ],
+    "images": [
+        {
+            "title": "",
+            "link": ""
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+    ],
+    "video": [
+        {
+            "title": "",
+            "link": ""
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+    ],
+	"links": [
+		{
+            "title": "Web stranica HBK",
+            "link": "http://www.hbk.hr/"
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+	]
+}
+--prijedlog 1.6 - isto ko 1.5., samo je multimedia enkapsulirana radi lakšeg parsiranja na frontendu	
+	+na ovaj način se u isti razred Multimedia može parsirati multimedija kod Contenta, Kategorije i kalendara (npr., Jackson JSON parserom)
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"created": 1504971270,
+	"modified": 1504971270,
+	"author": "Don David A. Leskovar SDB",  //username
+	
+	//Multimedia
+	"multimedia": {
+		"text":"Ovo je tekst",
+		"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+		"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+		"description": "Lectio Divina s Don Boscom",
+	
+		"audio": [
+			{
+				"title": "",
+				"link": "",
+				"duration": "" //?koji je format? (broj sekundi?)
+			},
+			{
+				"title": "",
+				"link": "",
+				"duration": ""
+			}
+		],
+		"documents": [
+			{
+				"title": "",
+				"link": "",
+				"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+			},
+			{
+				"title": "",
+				"link": "",
+				"type": ""
+			}
+		],
+		"images": [
+			{
+				"title": "",
+				"link": ""
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"video": [
+			{
+				"title": "",
+				"link": ""
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"links": [
+			{
+				"title": "Web stranica HBK",
+				"link": "http://www.hbk.hr/"
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		]
+	}
+}
+
+--Prijedlog 1.7. -- isto kao i 1.6. samo su informacije contenta enkapsulirane		-- MOJ IZBOR
+{
+	"meta" : {			//ContentMeta
+		"id": 5536,
+		"categoryId": 963,
+		"regionId": 1234,
+		"created": 1504971270,
+		"modified": 1504971270,
+		"author": "Don David A. Leskovar SDB",  //username
+	},
+	
+	//Multimedia
+	"multimedia": Multimedia
+}
+
+
+--Prijedlog 2 -> generička (umjereno) multimedija
+	-?PLL možda zahtjeva specifičniji dizajn
+	+u svakom slučaju ovo je dobar dizajn za BLL
+	--meta kod audija je trajanje u sekundama
+		--u meta općenito može ići bilo kakav objekt
+		+dopušta dodavanje novih stvari bez promjene APIja
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"multimedia":
+	[
+		Multimedia,
+		{"type":"video", "link": "https://www.youtube.com/watch?v=UrwgZnDOdKk"},
+		{"type":"audio", "link": "http://novaeva.com/datoteke/audio/2017_09_03_23NedjeljaKG_A_StojicD.mp3", "title":"Propovijed Stojić", "meta":"486"},
+		{"type":"pdf", "link":"http://novaeva.com/datoteke/audio/2017_09_03_23NedjeljaKG_A_.pdf", "title":"XXIII. NEDJELJA KROZ GODINU (A) - LECTIO DIVINA SDB.pdf", "meta":"document"},
+		{"type":"image", "link":"http://novaeva.com/datoteke/audio/2017_09_03_23NedjeljaKG_A_.jpg"},
+		{"type":"image", "link":"http://novaeva.com/datoteke/audio/2017_09_03_23NedjeljaKG_A_.jpg"},
+		{"type":"link", "link":"http://novaeva.com/node/5536"}
+	]
+	"text":"Ovo je tekst",
+	"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+	"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+	"description": "Lectio Divina s Don Boscom",
+	"created": 1504971270,
+	"modified": 1504971270
+}
+--Prijedlog 3 -> generička (POTPUNO) multimedija
+	-PLL gotovo sigurno zahtjeva specifičniji dizajn
+	+ovo je praktički preslika baze (DLL)
+		+ovo je efektivno lagano keširati na backendu
+			--kešira se Content po id-ju, sa svom multimedijom i evicta 
+			pri updateu tog contenta i to je to
+		+ovo je za bazu odlično, jer je jako 
+		jako generično (jedna tablica)
+			+atributi u bazi: type, value (TEXT), valueType, title?, meta (idealno neki JSON)
+		i jako jako proširivo
+			+PROŠIRIVOST: type -> proizvoljan tip multimedije; 
+						  valueType -> proizvoljan tip spremanja sadržaja multimedije
+						  value -> proizvoljan sadržaj multimedije
+						  meta -> proizvoljni dodatni (opisni) podaci multimedije (jednostavna vrijednost ili json)
+	+možda dovoljno dobar dizajn za BLL
+	--meta kod audija je trajanje u sekundama
+	--u općenitom slučaju "meta" može biti objekt (json)
+		--?može se čak i u bazi pohranit json
+		--valueType=link|binary|text
+		--meta=nadskupina(dokument)|dužina(486)|visina,širina,...
+		--?multimedija često ima title, ali malo mi je to čudno stavljat dodatno
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"multimedia":
+	[
+		Multimedia,
+		{"type":"video", "value": "https://www.youtube.com/watch?v=UrwgZnDOdKk", "valueType":"link",},
+		{"type":"audio", "value": "http://novaeva.com/datoteke/audio/2017_09_03_23NedjeljaKG_A_StojicD.mp3", "valueType":"link", "title":"Propovijed Stojić", "meta":"486"},
+		{"type":"pdf", "value":"http://novaeva.com/datoteke/audio/2017_09_03_23NedjeljaKG_A_.pdf", "valueType":"link", "title":"XXIII. NEDJELJA KROZ GODINU (A) - LECTIO DIVINA SDB.pdf", "meta":"document"},
+		{"type":"image", "value":"http://novaeva.com/datoteke/audio/2017_09_03_23NedjeljaKG_A_.jpg", "valueType":"link"},
+		{"type":"image", "value":"http://novaeva.com/datoteke/audio/2017_09_03_23NedjeljaKG_A_.jpg", "valueType":"link"},
+		{"type":"image", "value":"gdsfjrjsjjd", "valueType":"binary"},
+		{"type":"link", "value":"http://novaeva.com/node/5536", "valueType":"link"},
+		{"type":"title", "value":"XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom", "valueType":"text", "language"?="hr"},
+		{"type":"description", "value":"XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom", "valueType":"text"},
+		{"type":"text", "value":"Ovo je tekst", "valueType":"text"},
+		{"type":"html", "value":"<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>", "valueType":"html"}
+	]
+	"created": 1504971270,
+	"modified": 1504971270
+}
+
+--sadržaj kategorije uz paginaciju
+--dohvaća sadržaj odabrane regije (u jeziku te regije - DEFAULT) (ili zadanom jeziku - OVERRIDE)
+--dohvaća tekst odabranog tipa (type)
+--!!za root svakog entiteta kategoriju id=0
+--include-subs znači da se uključuju podkategorije i podsadržaj u rezultat (paginacijski api)
+/categories/{id}/include-subs			--npr: novaeva.com/api/v3/sermons/categories/483
+URL PARAMS: page=1 & items=20
+			&region=4 (& language=3)
+RESPONSE
+--STARI -> http://novaeva.com/json?api=2&cid=9
+-Ja bih uklonio ove "SIGNALNE" stvari iz RESPONSA
+	--APIstatus, rezultat, paket, jos
+	+to nije "dio resursa", a api služi za dohvat resursa
+{
+	"APIstatus": 2,
+	"rezultat": 0,
+	"subcat": [
+		{
+			"cid": "1136",
+			"name": "Test"
+		}
+	],
+	"image": {
+		"640": "http://novaeva.com/datoteke/styles/640/public/headers/IsusMozaiikLice.jpg",
+		"720": null,
+		"date": 0,
+		"original": "http://novaeva.com/datoteke/headers/IsusMozaiikLice.jpg"
+	},
+	"paket": 10,
+	"jos": 1,
+	"vijesti": [
+		{
+			"attach": {
+				"video": true,
+				"documents": false,
+				"music": false,
+				"images": false,
+				"text": true
+			},
+			"nid": "5775",
+			"datum": "1515767709",
+			"naslov": "II. NEDJELJA KROZ GODINU (B) - Lectio Divina SDB",
+			"tekst": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><h3 class=\"null\">»Učitelju – gdje stanuješ?« Reče im: »Dođite i vidjet ćete.« (Iv 1, 35-42)</h3></div>"
+		},
+		...
+	]
+}
+RESPONSE
+--Prijedlog 1 -> CATEGORY
+	--POPRAVKE: maknute signalne stvari; svi nazivi na engl; idjevi su brojevi; null->nema atributa;
+				STANDARDIZIRAN format Contenta (pri dohvatu kategorije = pri dohvatu Contenta);
+				nazivi na eng
+	--PROMJENE: CategoryInfo.name->title, cid->id; image.original->multimedia.image; vijesti -> content
+	--UKLONJENO: attach
+	--DODANO: kategorija ima multimediju (slika, opis, video,...); id
+-Ja bih uklonio ove "SIGNALNE" stvari iz RESPONSA
+	--APIstatus, rezultat, paket, jos
+	+to nije "dio resursa", a api služi za dohvat resursa
+{
+	"id":1234,
+	"regionId": 1234,
+	"categoryId": 963,
+	"subcategories": [
+		CategoryInfo,
+		{
+			"id": "1178",
+			"title": "Duhovnost"
+		},
+		...
+	],
+	"content": [Content,...],
+	Multimedias
+}
+{
+	"id":1234,
+	"regionId": 1234,
+	"categoryId": 963,
+	"subcategories": [
+		CategoryInfo,
+		{
+			"id": "1178",
+			"title": "Duhovnost"
+		},
+		...
+	],
+	"content": [Content,...],
+	"multimedia" : {Multimedia}
+}
+{	--MOJ IZBOR --CategoryWithSubs
+	//informacije, title, ..., multimedija kategorije
+	"features" : {Content},
+	"subcategories": [
+		CategoryInfo,
+		{
+			"id": "1178",
+			"title": "Duhovnost"
+		},
+		...
+	],
+	"content": [Content,...]
+}
+
+--promjene u prvoj razini kategorije od zadanog datuma;
+	--!!!jako bitno, trebat će čuvat zaseban client side keš za svaki od root entiteta, jer su id-jevi UNIQUE samo unutar entiteta
+	-uz paginaciju:
+		-možda ne paginaciju, jer nema? koristi klijentu, a povećava složenost klijentu
+		+al možda i da paginaciju, jer će inače korisnici odjednom morat povuć masu (sve) obavijesti
+			-no ovo komplicira klijentima, kako da pošalju više zahtjeva za promjenama?
+	+vraća čitav sadržaj za dodani content
+		+ne mora se upućivat novi poziv
+	+new,changed,deleted
+	--IMPLEMENTACIJA BACKEND
+		--svaki entitet čuva stablo promjena 
+		--Prijedlog 1 -> stablo se ažurira dekoratorskim pristupom
+			--dekorira se BLL ili DLL
+		--Prijedlog 2 -> stablo se ažurira AOP pristupom, implementacijom vlastite AOP anotacije
+			+(Prijedlog1 i Prijedlog2) moguće implementirat i CMS i pjesmaricu iterativno
+				--prvo CRUD i paginacija, a onda dodavanje bez promjena /changes
+/categories/{id}/changes/{date}
+URL PARAMS: (page=1 & items=20)? 
+			&region=4 (& language=3)
+REQUEST
+--Prijedlog 1 -> UNIX timestamp
+	+UNIX timestamp je standardizirani način
+	-drugi format koristimo kod kalendara - nekonzistentnost
+		+Može se jednostavno riješit ako kalendar budemo integrirali u backend,
+		neka backend vrši konverziju UNIX Timestamp -> "2017-03-23"
+				
+GET -> arguments in url
+{
+	"date":1515855447
+}
+--Prijedlog 2 -> "2017-03-23" YYYY-MM-dd
+	+ovaj format je dogovoren za API za novi kalendar
+GET
+{
+	"date":"2017-03-23"
+}
+RESPONSE:
+--Prijedlog 1 -> vraćaju se samo id-jevi
+{
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			10, 20, (content id),...
+		],
+		"changed": 
+		[
+			11, 21, (content id),...
+		],
+		"deleted": 
+		[
+			12, 22, (content id),...
+		]
+	},
+	"categories": 
+	{
+		"new": 
+		[
+			10, 20, (category id),...
+		],
+		"changed": 
+		[
+			11, 21, (category id),...
+		],
+		"deleted": 
+		[
+			12, 22, (category id),...
+		]
+	},
+}
+--Prijedlog 2.1. -> vraća se OPISNIK sadržaja/kategorije | RAZDVOJENI Content/Categories | RAZDVOJENI new/changed/deleted
+--Opisnik sadržava samo one informacije potrebne za prikaz liste sadržaja/kategorija
+--Opisnik ne sadržava puni sadržaj (tekst, slike,...)
+	-hasMultimedia uvodi nekonzistentan način uporabe API-ja -- /changes i jednostavni dohvat sadržaja se moraju obrađivati na drugačiji način
+		+ali moraju ionako, zbog "new"|"changes"...
+{
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			ContentInfoWithHasMultimedia, 
+			{
+				"id":20, 
+				"title":"Slava Bogu na visini", 
+				"hasMultimedia" {
+					"video":true,
+					"audio":false,
+					"documents":true,
+					...
+				}
+			},...
+		],
+		"changed": 
+		[
+			ContentInfoWithHasMultimedia, {"id":22, "title":"Biblija",..},...
+		],
+		"deleted": 
+		[
+			ContentInfoWithHasMultimedia, {"id":26, "title":"",..},...
+		]
+	},
+	"categories": 
+	{
+		"new": 
+		[
+			CategoryInfoWithHasMultimedia, 
+			{
+				"id":20, 
+				"title":"Duhovnost", 
+				"hasMultimedia" {
+					"video":true,
+					"audio":false,
+					"documents":true,
+					...
+				}
+			},...
+		],
+		"changed": 
+		[
+			CategoryInfoWithHasMultimedia, {"id":22, "title":"Duhovnost",..},...
+		],
+		"deleted": 
+		[
+			CategoryInfoWithHasMultimedia, {"id":22, "title":"Duhovnost",..},...
+		]
+	},
+}
+--Prijedlog 3.0. Vraća se puni Content, a opisnik kategorije	
+	+Konzistento uporabi kao i paginacijski api
+		--pri otvaranju Contenta ne treba upućivat poziv; pri otvaranju kategorije treba upućivat poziv
+	+Content se jednostavno iskešira
+	+CategoryInfo služi samo za prikaz u listi
+		+kategoriju nema smisla keširat, jer i da se vrati čitava kategorija (sa contentom i podkategorijama) opet treba upućivati poziv za podkategorije te kategorije u trenutku kada se njima pristupa
+			--alternative nemaju puno smisla
+{
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			Content, {"id":20, "title":"Slava Bogu na visini",..},...
+		],
+		"changed": 
+		[
+			Content, {"id":22, "title":"Biblija",..},...
+		],
+		"deleted": 
+		[
+			Content, {"id":26, "title":"",..},...
+		]
+	},
+	"categories": 
+	{
+		"new": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"changed": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"deleted": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		]
+	},
+}
+-- MOJ IZBOR
+	+jednostavno keširanje informacija trenutne kategorije i njezinog sadržaja
+{	--CategoryChanges
+	//informacije, title, description, multimedija trenutne kategorije (što se promijenilo)
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			Content,...
+		],
+		"changed": 
+		[
+			Content,...
+		],
+		"deleted": 
+		[
+			Content,...
+		]
+	},
+	"subcategories": 
+	{	--SubcategoriesChanges
+		"new": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"changed": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"deleted": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		]
+	}
+}
+
+-- MOJ IZBOR -> za entitete, još je relevantan i "css"?
+	+jednostavno keširanje informacija trenutne kategorije i njezinog sadržaja
+	--https://spring.io/guides/gs/async-method/
+	--http://www.baeldung.com/spring-async
+		--kad @Async metode pozoveš na normalan način (.method()) one se izvršavaju asinkrono
+	--https://dzone.com/articles/asynchronous-method-calls
+{	
+	//informacije, title, description, multimedija trenutne kategorije (što se promijenilo)
+	"features" : {Content},
+	"css":"http:...css",
+	"content": 
+	{
+		"new": 
+		[
+			Content,...
+		],
+		"changed": 
+		[
+			Content,...
+		],
+		"deleted": 
+		[
+			Content,...
+		]
+	},
+	"subcategories": 
+	{
+		"new": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"changed": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"deleted": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		]
+	},
+}
+--Prijedlog 3.1. -> vraća se PUNI sadržaj/kategorija | RAZDVOJENI Content/Categories | RAZDVOJENI new/changed/deleted
+--puni sadržaj/kategorija sadržava sve atribute potrebne za keširanje na klijentu
+	--(tekst, slike,...)
+	--NE sadržava PODkategorije/content kategorije
+--?Content i Category se nužno RAZLIKUJU, tako da ne mogu biti spojeni
+	-npr., Content sadrži tekst, a Category ne
+	+jel moguće dodati da i Category ima multimediju, pa da onda Content i Category imaju istu strukturu
+		--razlika je samo u podkategorijama
+{
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			Content, {"id":20, "title":"Slava Bogu na visini", multimedia?..},...
+		],
+		"changed": 
+		[
+			Content, {"id":22, "title":"Biblija",..},...
+		],
+		"deleted": 
+		[
+			Content, {"id":26, "title":"",..},...
+		]
+	},
+	"subcategories": 
+	{
+		"new": 
+		[
+			Category, {"id":20, "title":"Duhovnost",..},...
+		],
+		"changed": 
+		[
+			Category, {"id":22, "title":"Duhovnost",..},...
+		],
+		"deleted": 
+		[
+			Category, {"id":22, "title":"Duhovnost",..},...
+		]
+	},
+}
+--Prijedlog 3.2. -> vraća se PUNI sadržaj/kategorija | SPOJENI Content/Categories | RAZDVOJENI new/changed/deleted
+	+samo ako je moguće: dodati da i Category ima multimediju, pa da onda Content i Category imaju istu strukturu
+		--razlika je samo u podkategorijama
+	-!Content i Category mogu imati isti id
+		+mogu se spojit i na backendu tako da nemaju isti id
+		-meni je ovaj pristup bezveze zbog "type"
+{
+	"features" : {Content},
+	"new": 
+	[
+		ContentOrCategory, {"type":"CONTENT", "id":20, "title":"Slava Bogu na visini", multimedia?..},...
+	],
+	"changed": 
+	[
+		ContentOrCategory, {"type":"CONTENT","id":22, "title":"Biblija",..},...
+	],
+	"deleted": 
+	[
+		ContentOrCategory, {"type":"CATEGORY", "id":26, "title":"Duhovnost",..},...
+	]
+}
+--Prijedlog 3.3. -> vraća se PUNI sadržaj/kategorija | SPOJENI Content/Categories | SPOJENI new/changed/deleted
+	--ovaj API je zapravo kako bi ja mogao ovo raditi na backendu sa stablom u bazi
+	--ContentOrCategoryChanges nema subcategories i subcontent
+	+samo ako je moguće: dodati da i Category ima multimediju, pa da onda Content i Category imaju istu strukturu
+		--razlika je samo u podkategorijama
+	-!Content i Category mogu imati isti id
+		+mogu se spojit i na backendu tako da nemaju isti id
+{
+	"features" : {Content},
+	"changes":
+	[
+			ContentOrCategoryChanges, 
+			{"type":"CONTENT", "changes":"NEW", "id":20, "title":"Slava Bogu na visini", multimedia?..},
+			{"type":"CONTENT", "changes":"CHANGED", "id":22, "title":"Biblija",..},
+			{"type":"CATEGORY", "changes":"DELETED", "id":22, "title":"Duhovnost",..}...
+	]
+}
+
+
+--osnovna notifikacija o promjenama - ima li bilo kakvih promjena u kategorijama od zadanog datuma
+--to je ono kad se zažuti u aplikaciji
+--za sve osnovne kategorije ispituje jesu se dogodile promjene u prvoj razini
+--?vraća promjene tipa new i changed (ne deleted) -> jer korisnike to ne zanima
+	-!pri ulazu u kategoriju se onda uvijek mora slati /categories/{id}/changes/{date} zahtjeva
+		--bez obzira na to jel kategorija zasvijetljena ili ne
+--jel se dogodila promjena
+	--ako se dogodila promjena od zadnjeg datuma provjere, samo je potrebno zasvijetliti kategoriju
+	--!!ako se nije dogodila promjena od zadnjeg datuma provjere, kategoriju je potrebno ostavit onakvu
+	kakva je (bilo zasvijetljena ili ne)
+--Stari pristup
+	--vraćaju se najnoviji id-jevi contenta unutar kategorije
+	-podrška samo za dodavanje contenta
+	-nema podrške za update/brisanje contenta/categorije
+	-nema podrške za dodavanje kategorije
+http://novaeva.com/json?indicators=1
+{
+"1": 5277,
+"4": 5710,
+"7": 5771,
+"8": 4442,
+"9": 5775,
+"10": 5661,
+"11": 2468,
+"354": 5647,
+"355": 3692,
+"rezultat": 0
+}
+--Prijedlog 1 -> na tragu starog rješenja s id-jevima novih vijesti
+	-problem je sa razdvojenom domenom idjeva različitih entiteta
+/indicators/{date}
+REQUEST
+--GET
+--date je istog formata kao i kod /../changes
+RESPONSE:
+{
+	"categories": [1,4,355],
+	"backgroundImage" : "https://www.images.com/image1",
+	"categoriesCSS" : [{"0":"https://www.novaeva.com/css/css0.css"}, {"355":"https://www.novaeva.com/css/css355.css"},...]
+}
+--Prijedlog 1.5. -> Simboličke konstante za entitete	-- MOJ IZBOR
+	+simboličke konstante omogućuju laganu proširivost novim entitetima (npr., radio, kalendar,...) - bez mijenjanja klijenata
+		--?predlažem simboličke konstante na hrvatskom (a ne engleskom) jer će prijevodi bit malo čudni...
+		--!potrebno je konkretno specificirati sve simboličke konstante
+	--pozadinska slika i css se šalju ukoliko su izmjenjeni od zadanog datuma
+	--IMPLEMENTACIJA BACKEND
+		--Prijedlog 1. Zaseban mikroservis odgovoran za skupne informacije aplikacije; RootMService
+			--RootMService nudi resurs: /general/changes/{date}
+			--RootMService dobiva informacije o promjenama entiteta od samih entiteta ASINKRONO
+				--preko DOMAIN eventova: http://enterprisecraftsmanship.com/2017/07/05/how-to-request-information-from-multiple-microservices/
+					--izguglat Spring Domain events
+				--informacije koje su potrebne RootMServiceu:
+					--pri svakoj relevatnoj promjeni unutar entiteta (?!!Mislim samo DODAVANJE sadržaja bilo gdje u hijerarhiji):
+					--{simbolicka konstanta, datum}
+					--RootMService čuva jednostavno parove {simbolicka konstanta, datum}
+			--RootMService čuva background image i css posebno
+/general/changes/{date}
+{
+	"entities": ["MOLITVENIK", "DUHOVNOST", "POZIV", "KALENDAR",..],
+	"backgroundImage" : "https://www.images.com/image1.png",
+	"css" : "https://www.novaeva.com/css/css0.css"
+}
+
+--Prijedlog 2 -> uniforman model za root, kao i za sve ostalo
+	+uniforman model za root, kao i za sve ostalo
+	-?kako riješit specifične kategorije
+		--hoće li se morati npr., za pjesmaricu posebno implementirati /changes?
+REQUEST
+--GET
+--date je istog formata kao i kod /../changes
+/categories/{ROOT_id}/changes/{date}
+URL PARAMS: (page=1 & items=20)? 
+			&region=4 (& language=3)
+[
+		ContentOrCategoryChanges, 
+		{"type":"CATEGORY", "changes":"CHANGED", "id":354, "title":"Duhovnost",..},
+		{"type":"CATEGORY", "changes":"CHANGED", "id":7, "title":"Propovijedi",..},
+		{"type":"CATEGORY", "changes":"CHANGED", "id":10, "title":"Multimedija",..},
+		
+		{"type":"CONTENT", "changes":"NEW|CHANGED", "id":1231, "title":"cssDEFAULT", ?"link":"https://www.novaeva.com/css/css0.css",...},
+		{"type":"CONTENT", "changes":"NEW|CHANGED", "id":1232, "title":"backgroundImage", ?"link":"https://www.novaeva.com/images/backgroundImage.jpeg",...},
+		{"type":"CONTENT", "changes":"NEW|CHANGED", "id":1233, "title":"css381", ?"link":"https://www.novaeva.com/css/css381.css",...}
+		...
+]
+--Prijedlog 3 -> POLUuniforman model za root, kao i za sve ostalo
+	+uniforman model za root, kao i za sve ostalo
+	-?kako riješit specifične kategorije
+		--hoće li se morati npr., za pjesmaricu posebno implementirati /changes?
+REQUEST
+--GET
+--date je istog formata kao i kod /../changes
+/root/changes/{date}
+URL PARAMS: (page=1 & items=20)? 
+			&region=4 (& language=3)
+{
+		"categories":
+		[
+			{"type":"CATEGORY", "changes":"CHANGED", "id":354, "title":"Duhovnost",..},
+			{"type":"CATEGORY", "changes":"CHANGED", "id":7, "title":"Propovijedi",..},
+			{"type":"CATEGORY", "changes":"CHANGED", "id":10, "title":"Multimedija",..},
+			...
+		],
+		
+		"css": 
+		[
+			{"type":"CONTENT", "changes":"NEW|CHANGED", "id":1231, "title":"cssDEFAULT", ?"link":"https://www.novaeva.com/css/css0.css",...},
+			{"type":"CONTENT", "changes":"NEW|CHANGED", "id":1233, "title":"css381", ?"link":"https://www.novaeva.com/css/css381.css",...},
+			...
+		]
+		
+		"backgroundImage":
+		[
+			{"type":"CONTENT", "changes":"NEW|CHANGED", "id":1232, "title":"backgroundImage", ?"link":"https://www.novaeva.com/images/backgroundImage.jpeg",...},
+		]
+}
+--POBOLJŠANJE - OBRAZLOŽENJE -> u odnosu na stari pristup sa id-jem najnovije vijesti
+	+omogućuje indikaciju dodavanja/updatea/brisanja vijesti ili foldera
+	(za razliku od samo dodavanja vijesti)
+	+klijent mora samo pamtit jel kategorija zasvijetljena ili ne
+	(umjesto da pamti zadnji id vijesti kategorije + jel kategorija zasvijetljena ili ne)
+--klijent korisniku NE PRIKAZUJE (u listi) css i background image content
+--struktura kategorija
+	--ROOT
+	  --?za svaku regiju
+	  --ne, nego u DEFAULTNOJ regiji
+		--Duhovnost -> Category
+		--Multimedija
+		--Molitvenik
+			--(X) css od molitvenika
+				-klijent MORA posebno konfigurirat da NE PRIKAZUJE (u listi) css i background image content korisniku
+		--Osnovne kategorije
+		--...
+		--css0 (CONTENT -> defaultni css)
+		--backgroundImage (CONTENT -> slika pozadine)
+		--css od molitvenika
+			+klijent NE MORA posebno konfigurirat da NE PRIKAZUJE (u listi) css i background image content korisniku
+		
+--css0 je DEFAULT css, koji se primjenjuje na sadržaj kategorije, ako ta kategorija 
+nema eksplicitno definirani css
+-!problem različitih id-jeva za osnovne kategorije različitih regija (u slučaju da je poseban folder za svaku regiju)
+-!ostaje problem dupliciranja za različite regije (u slučaju da je poseban folder za svaku regiju)
+	+DEFAULTna regija rješava problem
+	-!inače imamo problem što osnovne kategorije različitih regija imaju isti naziv (a trebali bi imati prijevode na druge jezike)
+		--u slučaju da je isti folder za svaku regiju
+		--odnosno da su osnovne kategorije u defaultnoj regiji
+		+ovo je otprilike prihvatljivo; prijevodi se mogu riješit na više načina (npr., hardkodiranje na klijentu)
+		
+Prijedlog 3.1
+	-previše informacija
+{	
+	//informacije, title, description, multimedija trenutne root kategorije (što se promijenilo)
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			Content, {"id":20, "title":"Slava Bogu na visini",..},...
+		],
+		"changed": 
+		[
+			Content, {"id":22, "title":"Biblija",..},...
+		],
+		"deleted": 
+		[
+			Content, {"id":26, "title":"",..},...
+		]
+	},
+	"subcategories": 
+	{
+		"new": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"changed": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"deleted": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		]
+	},
+}
+
+
+--tražilica po osnovnom queriju; uz paginaciju
+--pretražuje sve ili zadanu regiju
+/categories/{id}/search/include-subs
+URL PARAMS: page=1 & items=20 
+			&region=4 (& language=3)
+			&query="Tekst pretrage"
+--Prijedlog 1 -> Modularni pristup; Ako izaberemo modularni pristup za content i CategoryWithSubs --MOJ IZBOR
+	+Isti razred (Category) se koristi za parsiranje na frontendu
+	+Rezultati pretrage se prikazuju na isti način kao i kategorija
+{
+	CategoryWithSubs
+}
+	
+--Prijedlog 2 -> Modularni pristup; uz opisne informacije
+	+dodatno se prikazuju opisne informacije (možda nije ni potrebno)
+{
+	"numContent":50,
+	"numSubcategories":150,
+	"results": Category
+}
+
+
+----Generički sadržaj
+
+----Pjesmarica
+--KLIJENTI
+	--pri prikazu pojedine pjesme treba ubacit plugin za akorde
+
+--sadržaj kategorije uz paginaciju
+	-jel potrebno:
+		-izvana se ne koristi (klijenti koriste direktno search api)
+		+iznutra se koristi (song search api ga koristi?)
+		-to je osnovni servis za pjesme koji bi mogli ponudit prema vani?
+	--!!za korijensku kategoriju, id=0
+
+	--SongContent ne može biti Content, jer to ubija semantiku resursa, tj., u općenitom slučaju me zanimaju tagovi svake pojedine pjesme iz rezultata
+		--kad bi mogao biti, moglo bi se na generičkiji način radit prikaz sadržaja na klijentu
+
+
+--Prijedlog 1 -> 2 resursa
+1. RESURS:
+/songs/categories/{id}/include-subs
+--potpuno generički Content i Category radi generičkog prikaza liste sadržaja na klijentu
+	+generički prikaz liste sadržaja na klijentu
+	+puno brži dohvat - puno manje informacija se prenosi (za svaku pjesmu...)
+	-kad se otvori pojedina pjesma na klijentu, ne mogu se vidit njezini tagovi
+		+klijenti mogu rekonstruirat tagove pojedine pjesme tako da pamte dok korisnik izabire dodatne tagove (a ovo se ionako mora prikazivat na klijentu u obliku Pjesmarica->Šansone->Marijanske u prikazu kategorije)
+	+meni je ovo trivijalno implementirat iz Resursa 2
+	--ZAKLJUČAK: Ovo je sasvim dovoljno, a olakšava klijentima rad
+{	-- SongCategoryWithSubs			--MOJ IZBOR
+	//skupno svi tagovi pjesama kad se skupe; preostali tagovi odabranih pjesama (kod pretrage)
+	"tags" : SongTags,
+	"category" : {
+		"features" : Content,
+		"subcategories" : [CategoryInfo],
+		"content" : [ContentWithChords]		//!! Pjesme
+	}
+}
+ContentWithChords
+{
+	"chords":"<div>...Cis...</div>,
+	"content":Content
+}
+
+2. RESURS										--MOJ IZBOR
+/songs/categories/{id}/include-subs/include-tags-each-song
++ovo je potrebno za klijente koji žele prikazati tagove pojedine pjesme kad se otvori pojedina pjesma
+	-klijenti mogu rekonstruirat tagove pojedine pjesme tako da pamte dok korisnik izabire dodatne tagove (a ovo se ionako mora prikazivat na klijentu u obliku Pjesmarica->Šansone->Marijanske u prikazu kategorije)
+{	-- SongCategoryWithSubsWithSongTags
+	//skupno svi tagovi pjesama kad se skupe; preostali tagovi odabranih pjesama (kod pretrage)
+	"tags" : SongTags,
+	"category" {
+		"features" : Content,
+		"subcategories" : [CategoryInfo],
+		"content" : [SongContent]		//!! Pjesme
+	}
+}
+
+SongTags
+	--moraju se moći identificirati i nadtagovi i podtagovi; zbog keširanja na klijentu i promjena; posebno za različite regije
+--Prijedlog 1
+	+TagInfo==CategoryInfo -> olakšava parsiranje
+	+Moguće je imati različite tagove i nadtagove za različite regije (uz keširanje na klijentu), što je potrebno, minimalno radi prijevoda
+	-preverbozno za tagove
+	--Hijerarhijski keš na klijentu	
+		+
+[
+	SongTag,
+	{
+		"features" : { -- TagInfo == CategoryInfo 
+			"id":538,
+			"title":"Prigoda"
+		},
+		"subtags" : [
+			TagInfo,
+			{
+				"id":538,
+				"title":"Prigoda"
+			}
+		]
+	}
+]
+SongTags
+--Prijedlog 2	-- MOJ IZBOR
+	+najjednostavniji model, jednostavno parsiranje
+		-Klijenti moraju koristiti Mapu/Dictionary
+		+brzina prijenosa je najveća - manje verbozno -> manje informacija se prenosi
+	+Moguće je (jedva) imati različite tagove i nadtagove za različite regije (uz keširanje na klijentu), što je potrebno, minimalno radi prijevoda
+		-ali se mora dobro prilagodit /changes
+			-nedostatak idjeva, ne može se implementirat "CHANGED" za tagove (pa se mora implementirat kao "DELETED" pa "NEW")
+				+što je relativno ok, jer se tagovi rijetko mijenjaju, većinom nastaju novi
+	--Hijerarhijski keš na klijentu	
+		--?/changes mora za svaki NEW ili DELETED tag dati informaciju o nadtagu, kako bi klijenti mogli pronaći tag u hijerarhijskom kešu
+			+Ne mora nužno, jer su imena tagova unutar regije UNIQUE -> dovoljno je predat ime taga (tj., nadtaga)
+				IMPLEMENTACIJA backend:
+					--tagovi su unique(tag_title, region_id)
+			+nadtagovi i tagovi se mogu u kešu tretirat isto
+				+ili se kešira kao dictionary (možda bolje zbog brisanja nadtagova)
+	+!!pri pretraživanju pjesama na backend se ne šalju idjevi tagova nego nazivi tagova
+{
+	"SongSupertagTitle":["SongTagTitle1","SongTagTitle2",...],
+	"Prigoda":["Misa","Klanjanje","Pomirenje",..],
+	...
+}
+
+--promjene u prvoj razini kategorije od zadanog datuma;
+	-jel potrebno:
+		-u biti ne:
+			-ne koristi se na taj način od klijenata; klijente zanimaju promjene za kombinaciju tagova
+			+promjene u pjesmama pojedinog taga
+			-promjene u pjesmama za 
+			--ZAKLJUČAK : odgađamo implementiranje ovoga dok ne bude potrebno
+/songs/categories/{id}/changes/{date}
+{	--SongCategoryChanges
+	"tags": SongTagsChanges,
+	"category":SongCategoryChanges
+}
+SongCategoryChanges
+{	
+	//informacije, title, description, multimedija trenutne kategorije (što se promijenilo)
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			ContentWithChords,..
+		],
+		"changed": 
+		[
+			ContentWithChords,...
+		],
+		"deleted": 
+		[
+			ContentWithChords,...
+		]
+	},
+	"subcategories": 
+	{	--SubcategoriesChanges
+		"new": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"changed": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"deleted": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		]
+	}
+}
+
+/songs/categories/{id}/changes/{date}/include-tags-each-song
+{	--SongTagsAndCategoryChangesWithSongTags
+	"tags": SongTagsChanges,
+	"category":SongCategoryChangesWithSongTags
+}
+SongCategoryChangesWithSongTags
+{	
+	//informacije, title, description, multimedija trenutne kategorije (što se promijenilo)
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			SongContent,..
+		],
+		"changed": 
+		[
+			SongContent,...
+		],
+		"deleted": 
+		[
+			SongContent,...
+		]
+	},
+	"subcategories": 
+	{	--SubcategoriesChanges
+		"new": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"changed": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"deleted": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		]
+	}
+}
+
+
+SongsTagsChanges	-- MOJ IZBOR (tagovi pjesama su dovoljno specifični da ih obrađujemo zasebno, da ih ne pokušavamo nakalit na Content model)
+--Prijedlog 1 -- koristeći manje verbozni prijedlog 2 za SongTags
+	+dosta jednostavno i neverbozno
+	-zahtjeva jednostavnu ali posebnu implementaciju na klijentu
+		--kod new, ako nadtag ne postoji potrebno ga je prvo stvoriti
+		--kod delete -> brisanjem nadtagova brišu se i podtagovi
+{
+	"new": 
+	{
+		"SongTagTitle1":"SongSupertagTitle1", "Krizni put":"Prigoda",...
+	},
+	"changed": 
+	{
+		"SongTagTitleOld":"SongTagTitleNew", "Krizni put":"Križni put",...
+	},
+	"deleted": 
+	[
+		"SongTagTitle1","SongTagTitle2", "Klanjanje", "Vrste pjesama"
+	]
+}
+SongsTagsChanges 		-- slično kao SubcategoriesChanges
+--Prijedlog 2 -- koristeći verbozniji prijedlog 1 za SongTags
+	- ne možemo koristiti SubcategoriesChanges za promjene tagova (zbog "superTagId" u TagInfo)
+		-!!što bi značilo da klijent ne može postupati s tagovima na isti način kao sa mapama :(
+			--kod Tagova te zanima za svaku kategoriju pjesmarice dvije razine tagova
+			--kod kategorija te zanima za svaku kategoriju jedna razina podkategorija
+	- na ovaj način se malo komplicira i poružnjuje upravljanje nadtagovima	(ako se radi o nadtagu "superTagId" == undefined)
+		--dodavanje|promjena|brisanje -> new|changed|deleted -> superTagId=undefined
+{	
+	"new": 
+	[
+		TagInfo, {"id":20, "superTagId":25, "title":"Klanjanje"}, {"id":25, "title":"Vrste pjesama"}...
+	],
+	"changed": 
+	[
+		TagInfo, {"id":22, "superTagId":25, "title":"Duhovnost"},...
+	],
+	"deleted": 
+	[
+		TagInfo, {"id":26, "superTagId":25, "title":"Duhovnost"},...
+	]
+}
+--TagInfo = CategoryInfo extended with "superTagId"
+--!!potrebno je imat zaseban keš za tagove, zbog preklapanja domene idjeva (id nije unique za {content,tags}, nego samo unutar pojedinog)
+
+--tražilica po osnovnom queriju i tagovima; uz paginaciju
+--pretražuje pjesme odabrane regije
+--dohvaća tekst odabranog tipa (type)
+--pretražuje pjesme koje sadrže query i koje sadrže sve tagove iz tag_ids
++konzistentan dizajn APIja po entitetima -> nekakav red -> olakšava razumijevanje, popravke, promjene,...
+/songs/categories/{id}/search/include-subs							--MOJ IZBOR
+URL PARAMS: page=1 & items=20
+			&region=4 (& language=3)
+			&query="Tekst pretrage" & tag_ids=Ulazne,liturgijske,marijanske
+{
+	SongCategoryWithSubs
+}
+/songs/categories/{id}/search/include-subs/include-tags-each-song
+{
+	SongCategoryWithSubsWithSongTags
+}
+			
+
+--promjene u rezultatima pretrage od zadanog datuma
+	+(samo za kombinacije tagova, bez querija):
+		+sa querijem je prekomplicirano, nek radije ide pretraga na server, ako se uključi query
+	+za kombinacije tagova, jel potrebno:
+		+promjene u strukturi podtagova (pojedine kombinacije tagova)
+			+npr., doda se novi tag unutar Misa
+		+promjene u pjesmama pojedine kombinacije tagova
+		-trebat će na backendu pamtit stablo za sve kombinacije tagova
+			-trebat će posebno stablo za pjesmaricu (jer se rade dinamičke kombinacije tagova)
+			+može se napravit i bez ovoga, ali to rješenje će dati dosta spor odziv ovog URLa
+		--Prijedlog za FRONTEND:
+			--kešira se samo prva razina (1 tag) i druga razina (2 taga)
+				--inače je to previše memorije i za frontend i backend (i sa 2 razine imaš preko 200000 kombinacija tagova)
+			--ne keširaju se rezultati ako se koristi query
+/songs/categories/{id}/search/changes/{date}
+URL PARAMS: region=4 (& language=3)
+			& tag_ids=Ulazne,liturgijske,marijanske
+-- koristeći manje verbozni prijedlog 2 za SongTags								--MOJ IZBOR
+	--&tag_ids=Ulazne;Liturgijske;Marijanske	--!!koriste se Stringovi iz SongTags
+-- koristeći više verbozni verbozni prijedlog 1 za SongTags
+	--& tag_ids=643;821;431
+{	
+	SongCategoryChanges
+}
+/songs/categories/{id}/search/changes/{date}/include-tags-each-song
+{
+	SongTagsAndCategoryChangesWithSongTags
+}
+
+
+
+
+--jedna pjesma
+	-jel potrebno:
+		-klijenti će ovo možda koristit (ako /changes vraća samo id-jeve), a možda ne (ako kroz changes vraća sav sadržaj)
+		+trebalo bi se interno koristit
+		+dobro je za analizu apija
+/songs/{id}		-- SongContent	--MOJ IZBOR
+{
+	"tags":SongTags,
+	"chords":"..",
+	"content":Content
+}
+
+PANEL
+--treba nuditi podršku za dodavanje, uređivanje i brisanje kategorije i sadržaja za svaki entitet
+--treba nudit podršku za navigaciju po stablu kategorija za svaki entitet zbog lakšeg pronalaska odgovarajućeg sadržaja		-- nešto poput windows explorera za FS
+--treba nudit osnovnu tražilicu unutar entiteta zbog lakšeg pronalaska kategorije/contenta
+--napravit mock ekrane -> poslat radaku na procjenu
+
+LOGIN i SECURITY
+--početno razvoj bez SECURITY sloja
+--naknadno dodavanje SECURITYja
+--koristi se OAuth
+	--http://www.baeldung.com/sso-spring-security-oauth2
+	--http://www.baeldung.com/rest-api-spring-oauth2-angularjs
+	--http://www.baeldung.com/angular-4-upgrade-for-spring-security-oauth/
+	
+	--https://github.com/Baeldung/spring-security-oauth
+	--https://spring.io/guides/tutorials/spring-boot-oauth2/
+	--http://www.baeldung.com/spring-security-5-oauth2-login
+	--http://projects.spring.io/spring-security-oauth/docs/oauth2.html
+--konkretni endpointi: to be defined
+	--!!koristi se email (a ne username)
+	--koristi se password
+--Radak mi treba objasnit kako se koristi OAuth uživo
+
+REST API
+--resurs je kategorija, odnosno content  -- a ne podkategorija, odnosno podcontent
+
+GET metode vraćaju:
+	--Content (linkovi za multimediju)
+	--Category (kategorija, bez podkategorija i podsadržaja)(sa linkovima za multimediju)
+		--po formatu == Content
+
+--u formama se ne predaju URL-ovi multimedije, nego fajlovi (MultipartFile)
+	--http://www.baeldung.com/spring-file-upload
+	--http://javasampleapproach.com/frontend/angular/angular-4-uploadget-multipartfile-tofrom-spring-boot-server#26_Integrate_Spring_Boot_Server_with_Angular_4_client	
+Zato POST(stvaranje) i PUT(izmjena - "file"=undefined ako se ne mijenja MultipartFile) koriste:
+	--ContentWithFiles(sa fajlovima za multimediju), a ne Content(sa linkovima) za multimediju
+	--CategoryWithFiles(kategorija, bez podkategorija i podsadržaja)(sa fajlovima za multimediju), a ne Category(kategorija, bez podkategorija i podsadržaja)(sa linkovima za multimediju) za multimediju
+		----po formatu == ContentWithFiles
+ContentWithFiles			//audio, images i documents umjesto "link" imaju "file"; video i links i dalje imaju "link"
+{
+	"id": 5536,
+	"categoryId": 963,
+	"regionId": 1234,
+	"created": 1504971270,
+	"modified": 1504971270,
+	"author": "Don David A. Leskovar SDB",  //username
+	
+	//MultimediaWithFiles
+	"multimedia": {
+		"text":"Ovo je tekst",
+		"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+		"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+		"description": "Lectio Divina s Don Boscom",
+	
+		"audio": [
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"duration": "" //?koji je format? (broj sekundi?)
+			},
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"duration": ""
+			}
+		],
+		"documents": [
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+			},
+			{
+				"title": "",
+				"file": MultipartFile,		//umjesto "link":"string"
+				"type": ""
+			}
+		],
+		"images": [
+			{
+				"title": "",
+				"file": MultipartFile		//umjesto "link":"string"
+			},
+			{
+				"title": "",
+				"file": MultipartFile		//umjesto "link":"string"
+			}
+		],
+		"video": [
+			{
+				"title": "",
+				"link": ""			//!! za video ostaje link				
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		],
+		"links": [
+			{
+				"title": "Web stranica HBK",
+				"link": "http://www.hbk.hr/"	//!! za link ostaje link
+			},
+			{
+				"title": "",
+				"link": ""
+			}
+		]
+	}
+}
+SongContentWithFiles
+{
+	"tags":SongTags,
+	"chords":"",
+	"content":ContentWithFiles
+}
+--!!!Preporučujem za parsiranje JSONa u Panelu koristit isti Angular razred (Content, tj., SongContent), 
+	--koji ima i "link" i "file" atribute, a prikazuje onaj koji nije undefined
+
+
+--KATEGORIJA - REST API
+
+--dohvat osnone kategorije bez podkategorija i podsadržaja
+--generičke kategorije (npr., Duhovnost)
+GET
+/categories/{id}			--npr., == /spirituality/categories/{id}	|	/songs/categories/{id}
+URL PARAMS: ?regionId={id regije}
+RESPONSE
+{
+	Category //==Content
+}
+
+--stvaranje kategorije
+POST
+/categories							--npr., == /spirituality/categories	|	/songs/categories
+REQUEST
+{
+	CategoryWithFiles //==ContentWithFiles
+}
+--id=0 | undefined | null
+--predati odgovarajući superCategoryId i regionId i author(username) u Category
+
+--uređivanje kategorije
+PUT
+/categories/{id}					--npr., == /spirituality/categories/{id}	|	/songs/categories/{id}
+REQUEST
+{
+	CategoryWithFiles //==ContentWithFiles
+}
+
+--brisanje kategorije -- efektivno se brišu i podkategorije i podsadržaj
+DELETE
+/categories/{id}					--npr., == /spirituality/categories/{id}	|	/songs/categories/{id}
+
+--KATEGORIJA
+
+
+--CONTENT (npr., spirituality, songs)
+
+--dohvat contenta (npr., pjesma ili Duhovnost) unutar kategorije
+--generičke kategorije (npr., Duhovnost)
+GET
+/{id}		--npr., == /spirituality/{id}
+URL PARAMS: ?regionId={id regije}
+RESPONSE
+{
+	Content
+}
+--specifične kategorije (npr., pjesme)
+GET
+/{id}		--npr., == /songs/{id}
+URL PARAMS: ?regionId={id regije}
+RESPONSE
+{
+	SongContent
+}
+
+--stvaranje contenta (npr., pjesma ili Duhovnost) unutar kategorije
+--generičke kategorije (npr., Duhovnost)
+POST
+/		--npr., == /spirituality
+REQUEST
+{
+	ContentWithFiles
+}
+--specifične kategorije (npr., pjesme)
+POST
+/		--npr., == /songs
+REQUEST
+{
+	SongContentWithFiles
+}
+--id=0 | undefined | null
+--predati odgovarajući superCategoryId i regionId i author(username) u Contentu
+
+--uređivanje contenta (npr., pjesma ili Duhovnost) unutar kategorije
+--generičke kategorije (npr., Duhovnost)
+PUT
+/{id}		--npr., == /spirituality/{id}
+REQUEST
+{
+	ContentWithFiles
+}
+--specifične kategorije (npr., pjesme)
+PUT
+/{id}		--npr., == /songs/{id}
+REQUEST
+{
+	SongContentWithFiles
+}
+--predati odgovarajući superCategoryId i regionId i username u Contentu
+
+--brisanje contenta (npr., pjesma ili Duhovnost) unutar kategorije
+--generičke kategorije (npr., Duhovnost)
+DELETE
+/{id}		--npr., == /spirituality/{id}
+--specifične kategorije (npr., pjesme)
+DELETE
+/{id}		--npr., == /songs/{id}
+
+
+
+--CONTENT 
+
+--kopiranje pjesama/contenta iz jedne regije u drugu regiju --> mora bit deep copy --> nekonzistentnost, al štaš
+
+
+--SONG TAGS
+
+--definirani tagovi pjesama neke regije
+GET
+/songs/tags
+URL PARAMS: region=4
+RESPONSE
+{
+	SongTags
+}
+
+--dodaj tag pjesama nekoj regiji
+POST
+/songs/tags
+URL PARAMS: region=4
+REQUEST
+--SongTag
+{
+	"tag":"Hodočašće",
+	"supertag":"Prigoda"
+}
+
+--uredi tag pjesama neke regije
+PUT
+/songs/tags/{tag}			--eg., /songs/tags/Hodočašće
+URL PARAMS: region=4
+REQUEST
+--SongTag
+{
+	"tag":"Hodočašća i procesije",
+	"supertag":"Prigoda"
+}
+
+--Izbriši tag pjesama neke regije 
+	--(brišu se i svi podtagovi);(svim pjesmama se uklanjaju ti tagovi)
+DELETE
+/songs/tags/{tag}
+
+--SONG TAGS
+
+--REGIJE
+--odavde se upravlja regijama i upravljačkim korisnicima regije
+--treba nuditi podršku za dodavanje, uređivanje i brisanje regije
+--treba nudit podršku za navigaciju po listi (ili stablu) regija zbog lakšeg pronalaska regije i korisnika regije
+--treba nudit osnovnu tražilicu zbog lakšeg pronalaska regije
+--nakon što se uđe u regiju vide se osnovni podaci regije i upravljački korisnici te regije, te se mogu mijenjati podaci regije i dodavati/uređivati/brisati korisnici
+
+Region
+{
+	"id" : 1,
+	"title":"Hrvatska salezijanska provincija",
+	"description" : "Salezijanci SDB Hrvatska"
+}
+--razmislit isplati li se za regiju dodat Content -- kao da ima neki opis, slike, zvukove,...
+--razmislit isplati li se hijerarhija regija, podregije i takve stvari -> kompliciraju se upravljački korisnici?
+
+--dohvat svih regija
+GET
+/regions
+RESPONSE
+[Region,...]
+
+--dohvat regije (osnovnih informacija)
+GET
+/regions/{id}
+RESPONSE
+{
+	Region
+}
+
+--stvaranje regije -> automatski se stvara stog upravljačkih korisnika regije
+POST
+/regions
+REQUEST
+{
+	Region
+}
+--id=0 | undefined | null
+
+--uređivanje regije
+PUT
+/regions/{id}
+REQUEST
+{
+	Region
+}
+
+--brisanje regije -- efektivno se brišu i upravljački korisnici regije
+DELETE
+/regions/{id}
+
+--REGIJE
+
+
+--USERS
+--Users kartica je zanimljiva 
+	--adminu sustava omogućuje direktno upravljanje svim korisnicima
+	--adminu regije omogućuje direktno upravljanje svim korisnicima te regije
+	--korisniku omogućuje da uređuje sebe. Npr., da promijeni username (zapravo ne, zbog veze Content -> USER preko username, jednom stvoreni username je nepromjenjiv)
+	--bez da moraju navigirati po kartici Regions i onda tražit za pojedinu regiju
+
+--korisnik ima unique id i unique username;
+	--kako bi se unique username mogao prikazivati i koristiti unutar Contenta kao oznaka autora sadržaja
+	--kako bi se nekom sadržaju mogao jednoznačno identificirati autor (npr., u slučaju da netko krene objavljivati neki zabranjeni sadržaj -> jednostavno izbrišeš korisnika)
+	
+USER 
+{
+	"id":1025,
+	"username":"Don David A. Leskovar SDB",
+	"email":"donDavid@salezijanci.hr",
+	"regionId": 1,
+	"role": "REGIONMODERATOR",
+}
+
+GET
+/users
+URL PARAMS: ?regionId={id regije}
+	--ako se ne preda regionId dohvaćaju se svi korisnici -> koje može dohvatiti trenutni korisnik
+		--admin sustava -> svi korisnici
+		--admin regije -> svi korisnici regije
+		--ostali -> ništa
+RESPONSE
+[User,..]
+	
+--dohvat korisnika
+GET
+/users/{id}
+RESPONSE
+{
+	User
+}
+
+--stvaranje korisnika
+POST
+/users
+REQUEST
+{
+	User
+}
+--id=0 | undefined | null
+--predati odgovarajući regionId i role u User
+
+--uređivanje korisnika
+PUT
+/users/{id}
+REQUEST
+{
+	User
+}
+
+--brisanje korisnika -- ne briše se sadržaj tog korisnika
+DELETE
+/users/{id}
+IMPLEMENTACIJA
+	--samo postaviti role na DELETED; ne brisati korisnika, radi identifikacije
+
+
+--ROLES
+
+GET
+/roles
+RESPONSE
+["FULLADMIN","REGIONMODERATOR",..]
+
+--ROLES	
+
+--USERS
+
+----Pjesmarica
+
+GENERAL(/general)
+
+--backgroundImage REST API
+
+GET
+/background-image
+RESPONSE
+{"link":"novaeva.com/images/..."}
+
+--izmjena pozadinske slike
+PUT
+/background-image
+REQUEST
+{"file":MultipartFile}
+
+--css
+--GENERAL
+
+
+
+
+
+----Izreke
+--random proverb
+/proverbs/random
+	+jel potrebno:
+		+jeste, ostatak contenta ne treba random
+	+vraća jednu izreku
+{
+	Content
+}
+
+/ostali api
+	-jel potrebno:
+		-nije, sve se može dohvatit iz generičkog contenta
+----Izreke
+
+
+KALENDAR
+=======================REQUEST=======================
+//Calendar request
+//TODO: Embed arguments in URL
+GET api.novaeva.com/calendar/startDate				->	/calendar
+{
+    "startDate": "2017-03-23"
+    "endDate": "2017-03-23"
+}
+=======================RESPONSE======================
+{
+    "weeks": [
+        {
+            "startDate": "",
+            "liturgicalWeek": 21,
+            "liturgicalTime": 3
+        },
+        {
+            "startDate": "",
+            "liturgicalWeek": 24,
+            "liturgicalTime": 5
+        }
+    ],
+    "days": [
+        "2017-03-23": {
+            "colour": 4,
+            "saints": ["sv. Ivan Bosco"],
+            "solemnity": "Ime Isusovo",
+            "feastDay": null
+        },
+        "2017-03-23": {
+            "colour": 2,
+            "saints": ["sv. Ivan Bosco"],
+            "solemnity": null,
+            "feastDay": "sv. Josip"
+        }
+    ]
+}
+=====================================================
+
+=======================REQUEST=======================
+//Readings request
+GET api.novaeva.com/calendar/2017-03-23/readings		->	/calendar/{date}/readings
+=======================RESPONSE======================
+{
+    "ligurgicalYear": "A",
+    "readings": [
+        {
+            "readingType": 2
+            "bibleVerse": "",
+            "theme": "",
+            "text": ""
+        },
+        {
+            "readingType": 2
+            "bibleVerse": "",
+            "theme": "",
+            "text": ""
+        }
+    ]
+}
+
+=======================REQUEST=======================
+//Media request
+GET api.novaeva.com/calendar/2017-03-23/media
+=======================RESPONSE======================
+{	-- Multimedia
+    "audio": [
+        {
+            "title": "",
+            "link": "",
+            "duration": ""
+        },
+        {
+            "title": "",
+            "link": "",
+            "duration": ""
+        }
+    ],
+    "documents": [
+        {
+            "title": "",
+            "link": ""
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+    ],
+    "images": [
+        {
+            "title": "",
+            "link": ""
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+    ],
+    "video": [
+        {
+            "title": "",
+            "link": ""
+        },
+        {
+            "title": "",
+            "link": ""
+        }
+    ]
+}
+--Prijedlog -- dodavanje type u documents i dodavanje text, description, title i links 
+	-> da bude isti format kao i kod multimedije contenta
+		--zapravo isti je format samo nema tih polja (opcionalna su)
+			+CalendarPluginMServis treba samo prosljeđivati pozive
+
+--podrška za evict cache, regenerate year -> panel za administratora
+
+
+
+----------------------------------------------------------------------------------
+Konverzija podataka
+--potrebno je dostaviti fajl EntityName.json za svaki entitet (npr., Duhovnost.json, Multimedia.json,...)
+{
+	"categories": [CategoryWithFiles,..],		//sve kategorije
+	"content" : [ContentWithFiles,...]					//sav sadržaj
+}
+--CategoryWithFiles == Category (without subcontent and subcategories)(sa "file" umjesto "links")  ==(format) ContentWithFiles
+	--ideja je da sve slike, dokumenti i zvuk budu na našem serveru unutar sustava
+		--pa je potrebno dostavit MultipartFile, a ne link za njih
+		--za video i link se dostavljaju linkovi
+	--"categories" polje izravnava hijerarhiju
+		--za svaku kategoriju mora vrijedit pravilo: u "categories" polju se prvo pojavljuje nadkategorija, pa tek onda kategorija
+			--može se postići (bilo kojim) obilaskom stabla)
+--Paziti na razliku u imenima izvorišnih i odredišnih atributa (npr., cid, nid -> id)
+--Paziti na razliku u tipovima podataka izvorišnih i odredišnih atributa (npr., cid, nid == string -> id = Number (long))
+--Postaviti svugdje regionId=1	(regija Hrvatska ili Hrvatska salezijanska provincija)
+--!!Paziti na još neke stvari
+	--tipa link->video ??
+
+

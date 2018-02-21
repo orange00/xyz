@@ -1,0 +1,25 @@
+1)
+/ = novaeva.com/api/v{broj_verzije}/{entity}
+{broj_verzije}=3
+
+--Entitet kojem se pristupa. Sve mogućnosti->Redom: pjesmarica|multimedija|duhovnost|izreke|propovijedi|aktualno|poziv|odgovori|molitvenik|kalendar|general|administracija(za regije, korisnike,prava pristupa,...)
+{entity} = songs|multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers|calendar|general|administration
+
+
+1.1) GENERAL 
+{entity}=general
+
+--backgroundImage REST API
+
+GET
+/background-image
+RESPONSE
+{"link":"novaeva.com/images/..."}
+
+--izmjena pozadinske slike
+PUT
+/background-image
+REQUEST
+{"file":MultipartFile}
+
+--css

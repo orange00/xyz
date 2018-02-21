@@ -1,0 +1,68 @@
+4)
+{entity}=songs
+
+4.2)
+SONGTAGS
+--dvorazinski tagovi pjesama
+	--npr:
+		--VRSTA
+			--Liturgijska
+			--Worship
+		--Prigoda
+			--Misa
+			--Klanjanje
+--svaka regija može definirati vlastite tagove pjesama
+			
+MODEL
+
+--koristiti Map<String,String> ili Dictionary<String,String> za parsiranje, zbog dinamickih kljuceva
+SongTags
+{
+	"SongSupertagTitle":["SongTagTitle1","SongTagTitle2",...],
+	"Prigoda":["Misa","Klanjanje","Pomirenje",..],
+	...
+}
+	
+	
+
+REST API
+
+--SONG TAGS
+
+--dohvat definiranih tagova pjesama neke regije
+GET
+/songs/tags
+URL PARAMS: region=4
+RESPONSE
+{
+	SongTags
+}
+
+--dodaj tag pjesama nekoj regiji
+POST
+/songs/tags
+URL PARAMS: region=4
+REQUEST
+--SongTag
+{
+	"tag":"Hodočašće",
+	"supertag":"Prigoda"
+}
+
+--uredi tag pjesama neke regije
+PUT
+/songs/tags/{tag}			--eg., /songs/tags/Hodočašće
+URL PARAMS: region=4
+REQUEST
+--SongTag
+{
+	"tag":"Hodočašća i procesije",
+	"supertag":"Prigoda"
+}
+
+--Izbriši tag pjesama neke regije 
+	--(brišu se i svi podtagovi);(svim pjesmama se uklanjaju ti tagovi)
+DELETE
+/songs/tags/{tag}			--eg., /songs/tags/Hodočašća i procesije
+
+--SONG TAGS

@@ -1,0 +1,50 @@
+AUTORIZACIJA
+Prijedlog 1 -- Api Gateway autorizacija
+	--autorizaciju vrši API Gateway
+	--generički, tako da ispituje URL 
+	(npr., traži koja je regija i koja je HTTP metoda i onda gleda jel korisnik admin za tu regiju i tu metodu
+		--pozivima UserManagementMServisa)
+	+generički, na jednom mjestu
+	-ne može se specijalizirat za pojedine entitete (bez kršenja SRP)
+	(npr., htjeli bi da pjesme i content može unositi ADMIN i WRITER contenta regije, 
+	 a da tagove pjesama može unositi samo ADMIN contenta regije)
+Prijedlog 2 -- Svaki MServis vrši vlastitu autorizaciju
+	-puno dupliciranog koda za generic content (krši se DRY)
+	+mogućnost specijalizacije prava pristupa
+Prijedlog 3 -- Kombinacija 1 i 2 - Najbolji prijedlog
+	--autorizaciju za CMS vrši API Gateway (SRP)
+		--primjenjuje najblaži mogući oblik autorizacije za te usluge
+	--autorizaciju za specijalizirane servise radi entitet (mikroservis) tog servisa (SRP)
+		-može samo postrožiti autorizaciju (ne može je ublažiti)
+			+većinom se to i traži (npr., htjeli bi da pjesme i content može unositi ADMIN i WRITER contenta regije, 
+	 a da tagove pjesama može unositi samo ADMIN contenta regije)
+
+-BITNO 
+	--prava pristupa se ne provjeravaju na poslovnom sloju (SRP poslovnog sloja)
+	--nego na sigurnosnom sloju, koji je proxy za URLove (SRP za sigurnosni sloj, mogućnost dodavanja bez promjena za sigurnosni sloj)
+	
+--prijedlog za UPRAVLJANJE SADRŽAJEM
+	--OAUTH
+
+USER MANAGEMENT
+-model korisnika:
+	--maksimalno pojednostaviti model, jer ga inače nitko neće htjeti koristiti
+		--READER - ovlasti nad dohvatom sadržaja
+		--Administratorski korisnici (izmjena sadržaja):
+			--FULLADMIN 
+				--programer, potpuni pristup sustavu, upravljanje konfiguracijom mikroservisa, direktni pristup evictu keša,...;direktni pristup bazi,...
+			--SYSTEMADMIN
+				--Šibo; stvara administratore regija i System WRITERe; 
+				--ovlasti nad svim sadržajem svih regija
+			--SYSTEMMODERATOR
+				--službeni moderatorski tim NoveEve; ovlasti nad svim sadržajem svih regija
+			--REGIONADMIN
+				--stvara Region moderatore; ovlasti nad tagovima pjesama pojedine regije
+			--REGIONMODERATOR
+				--objavljivači sadržaja pojedine regije; ovlasti nad svim sadržajem te regije
+			--DELETED
+				--bivši korisnik; radi identifikacije autoriziranog sadržaja
+
+PROBLEM
+	--sadržaj treba imati referencu na autora
+	

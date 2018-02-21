@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="trans.xsl"?>
+<!-- Minimalistički primjer; krajnji slučaj -->
+<category id="355">
+	<!-- Kategorija ne mora imati nijedan atribut osim id -->
+	<!-- Kategorija ne mora imati reprezentativnu sliku -->
+
+	<!-- Kategorija ne mora imati nijednu podkategoriju -->
+	<subcategories size="0">
+	</subcategories>
+
+	<!-- Kategorija može biti prazna (nema sadržaj) -->
+	<contents size="0">
+	</contents>
+</category>

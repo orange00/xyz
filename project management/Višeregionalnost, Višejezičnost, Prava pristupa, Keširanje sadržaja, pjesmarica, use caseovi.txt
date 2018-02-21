@@ -1,0 +1,235 @@
+1) Uvodimo više regija
+	-npr., HSP, SSP, Američka Biskupska konferencija,..
+	+omogućava razdvajanje sadržaja po državama,...
+	1a) Svaka regija ima zadužene administratore/moderatore? 
+	koji mogu upravljati sadržajem te regije
+		+omogućava da Slovenci upravljaju svojim sadržajem, Salezijanci 
+		svojim, Amerikanci svojim, nadbiskupija svojim,...
+	1b) Svaka regija ima svoj sadržaj
+		+omogućuje različit sadržaj za različite regije
+			--npr., HSP doda neku propovijed, a SSP doda neku drugu propovijed
+	1c) IDEJA, VISOK PRIORITET: Nasljeđivanje sadržaja 
+		--Tj., jedna regija može naslijediti neki sadržaj iz druge regije
+		--Odnosno, pri stvaranju sadržaja, Admin može stvoriti sadržaj na temelju 
+		nekog drugog sadržaja (template)
+			+omogućuje jednostavnije stvaranje sličnog sadržaja
+				+npr., dodaješ propovijed za XXX NKG, nasljediš 29. NKG
+				++npr., ponovo dodaješ sličnu obavijest kao prošle godine
+		IDEJA PANEL: 
+			--VISOK PRIORITET omogućit nasljeđivanje jednog sadržaja/foldera iz proizvoljne kategorije
+			--SREDNJI PRIORITET omogućit nasljeđivanje više sadržaja/foldera (checkbox) iz proizvoljne kategorije
+			--NIŽI PRIORITET omogućit nasljeđivanje više sadržaja foldera (checkbox) pri nasljeđivanju foldera
+		--bez dupliciranja (pravo nasljeđivanje):
+			--Jedan sadržaj može pripadati u više regija
+				-malo (čini mi se jako malo) kompleksnije za izvesti na backendu (ali nije prekompleksno)
+				-dosta je kompleksnije s korisnicima i pravima pristupa
+					-tj., potrebno je omogućiti prava pristupa na razini Contenta i razini MultimedijaJezik
+						--npr., Slovenija može za "Osnovne molitve" mijenjat isključivo multimediju na slovenskom
+						+možda se može na razini MultimedijaJezik stavit da uređivat mogu Admini one regije kojoj pripada Multimedija
+							-al onda i Multimedija mora imati regiju kojoj pripada
+							+ BITNO al to je uredu. Multimedija ima jezik i regiju
+			+praktično olakšava dodavanje prijevoda univerzalnog sadržaja
+				+Admini iz drugih država/regija će za univerzalni sadržaj dodavati prijevode
+			+nema dupliciranja
+				+dupliciranje je podloga za nekonzistentnost i greške
+				--posebno za univerzalni sadržaj
+			-NIJE PROBLEM: sav sadržaj mape je u svakoj regiji kojoj pripada mapa, a razlikuje se samo po jeziku 
+				--PROBLEM je u tome što možemo imati više regija sa istim jezikom (npr., župa i HSP) koje hoće imati istu mapu (npr., Lectio Divina)
+					--i onda će se sadržaj jedne regije prikazivat i u drugoj regiji
+				--RJEŠENJE: sadržaj mape za regiju se dohvaća i po jeziku i po regiji
+			-ne može se ostvariti bez (backend) višejezičnosti sadržaja
+				-Slovenci žele Amazing Grace na slo, Hrvati na hrv,.. 
+				++korisnici mogu pristupiti jednom sadržaju na više jezika (npr., Očenaš na lat, hrv, en)
+			+ima više smisla ako ćemo radit (backend multimedijsku) višejezičnost sadržaja
+				+omogućava grupiranje na jedno mjesto različitih prijevoda istog sadržaja/foldera
+				
+		--sa dupliciranjem sadržaja (templating)
+			--Jedan sadržaj/folder - jedna regija
+				+nešto lakše za backend
+			-dupliciranje
+				-dupliciranje je podloga za nekonzistentnost i greške
+				--posebno za univerzalni sadržaj
+				-dupliciranjem foldera korisnik ne može (jednostavno) pristupit jednom folderu u više regija
+					-npr., Ušo sam u Lectio Divina i htio bih vidjet Lectio Divina od Hrvata, pa od Slovenaca
+			+može se ostvariti bez (backend) višejezičnosti sadržaja
+				+Slovenci žele Amazing Grace na slo, Hrvati na hrv,..
+					+ovo se može jednostavno ostvariti tako da svaki sadržaj pamti svoj jezik
+				-korisnici NE mogu pristupiti jednom sadržaju na više jezika (npr., Očenaš na lat, hrv, en)
+				+dosta lakše za implementirat
+			+potpuna razdvojenost sadržaja regija
+			---praktično nerealno teško dodavanje prijevoda univerzalnog sadržaja
+				--prijevodi se mogu dodavat isključivo ako je omogućena višejezičnost
+				-prijevode mora dodavati službeni tim
+				-čak i ako se dodaju prijevodi, dostupni su samo u regiji u kojoj su 
+				dodani (npr., Službena regija)
+				-u stvarnosti, korisnik vrlo vjerojatno ne bi mogao pristupiti 
+				višejezično sadržaju
+					+osim preko službene regije
+	1d) IDEJA: Službena regija
+		--Službeni sadržaj na svim jezicima
+		+Provjereni sadržaj
+		+Univerzalni sadržaj
+			--npr., Univerzalne molitve i pjesme
+			--npr., Osnovne molitve, Časoslov, Čitanja, Papinski dokument, Pjesma "Amazing grace", Mapa "Lectio Divina"
+		+ Odavde sve ostale regije mogu naslijedit 
+		-!nema smisla bez višejezičnosti?
+			+jedino da se objavljuju stvari na engleskom, ali to isto nema smisla za mnoge stvari
+			(kome bi to bilo službeno, koji bi Hrvat molio molitvu na engleskom?)
+			+ima smisla jedino za dokumente
+	1d2) IDEJA: DEFAULTNA regija
+		--id=1
+		--sadržaj ove regije pripada svim regijama
+		+stvari poput: background-image, defaultni css, css kategorije
+			+inače bi morali ove stvari duplicirati, što nema puno smisla
+		--pri dohvatu sadržaja kategorije bilo koje regije treba uključiti sadržaj defaultne regije (za tu kategoriju)
+		--Upravljački pristup DEFAULTNoj regiji ima samo SUPERADMIN
+	1e) FRONTEND IDEJA VISOK PRIORITET - jezik aplikacije
+			+korisnik može izabrati jezik aplikacije
+				+npr., Amerikanac želi NovuEvu na engleskom
+				+jezik i regija aplikacije se može probat pri prvom otvaranju autodetektirati i 
+				ponuditi korisniku 
+					-npr., po geolokaciji,...
+			+nazivi osnovnih kategorija mu se prikazuju u odabranom jeziku
+				--npr., Duhovnost, Molitvenik,...
+				-ovo mora biti hardkodirano u aplikaciji?
+			+?Možda jednostavno lansirat posebne aplikacije (klijente) za sve regije (npr., NovaEva Slovenija)
+				-dupliciranje, loša ideja...
+		IDEJA SREDNJI PRIORITET: 
+		--Korisnik može izabrati (JEDNU ili) više regija koje će pratit
+			+npr., ja želim pratit sadržaj svoje župe, Vatikana, HBK i HSP
+		--FRONTEND IDEJA: Regije - Tabovi 
+			--regije (koje korisnik "prati") se unutar kategorije/foldera
+			prikazuju kao tabovi
+				+jednostavno za implementirat (backend, (relativno) frontend)
+				+korisniku je jasno razdvojen sadržaj po regijama
+		--IDEJA VIŠEJEZIČNOST, MANJI PRIORITET: Regija - promjena željenog jezika
+			--VIŠI PRIORITET: Korisnik unutar taba (regije) može mijenjati jezike
+				+npr., Molitvenik -> Službena -> hrv, en
+			--MAL PRIORITET: Korisnik za svaku regiju koju prati može promjeniti primarni jezika
+				+Npr., Hrvat u Americi želi pratiti HSP ali na engleskom
+				+Npr., Amerikanac na odmoru u Hrvatskoj želi pratiti HSP ali na engleskom
+	1f) Osnovne kategorije (Duhovnost, Multimedija,...) ne pripadaju ni jednoj regiji 
+	(odnosno pripadaju svim regijama)
+		--bez višejezičnosti:
+			--osnovne kategorije nemaju regiju (tj., DEFAULTNA regija)
+		--sa pravim nasljeđivanjem:
+			--osnovne kategorije nemaju regiju ili 
+			--osnovne kategorije imaju sve regije koje postoje
+				-NIJE PROBLEM u ovom slučaju je zapravo sav sadržaj u svakoj regiji, a razlikuju se samo po jeziku
+					-PROBLEM je u tome što možemo imati više regija sa istim jezikom (npr., župa i HSP)
+				--RJEŠENJE: sadržaj mape/kategorije za regiju se dohvaća i po jeziku i po regiji
+	1g) Regija ima službeni jezik
+		--(npr., HSP->Hrvatski, SSP->Slovenski,..)
+	1h) Kategorija nema službeni jezik
+		Kategorija ima regiju(e) kojima pripada
+		Sadržaj:
+			--bez višejezičnosti:
+				--ima službeni jezik
+				--ima 
+	1i) IDEJA Hijerarhija regija
+		-VRLO NISKI PRIORITET
+			-trenutno je ovo overkill
+		--regije su hijerarhijski organizirane (podregije)
+		--npr:
+			--Hrvatska
+				--HSP
+				--Hrvatska franjevačka provincija
+				--Nadbiskupija Zagreb
+					--Katedrala
+					--Župa sv. Josipa
+		--korisnici se mogu pretplatit na jednu regiju ili više regija
+			--pretplatom na nadregiju se pretplaćuju na sve podregije te nadregije
+		
+				
+		
+2)	Uvodimo višejezičnost sadržaja
+	--? isplati li se? (jer je tehnički kompleksno) Možda je višeregionalnost dovoljna?
+	+?sadržaj se može objaviti na više jezika za različite ciljne skupine
+		--?npr., Hrvati u Americi bi htjeli čuti propovijed HSP na engleskom
+	++omogućava da (posebno univerzalni) sadržaj bude korisniku dostupan na više jezika
+		+Ja (korisnik) bih htio vidjeti kako se Očenaš moli na lat, hrv i engleskom
+		--Ovo je najveća prednost backend (multimedijske) višejezičnosti. Ali pitanje je 
+		koliko je ovo bitno, tj., isplati li se s obzirom na to da je tehnički dosta kompleksno 
+		za izvesti
+		+Bez višejezičnosti, službena regija gubi smisao
+		
+	--bez višejezičnosti:
+		--Sadržaj ima jezik i regiju
+		--Multimedija ne treba ni jezik ni regiju
+	--sa višejezičnosti:
+		--Sadržaj može eventualno imat primarni jezik (al to mi ne izgleda prepotrebno)
+		--Multimedija ima jezik i regiju
+	--Višejezičnost - razrada
+		--Sadržaj i kategorija ima definirani primarni jezik
+		--Regija ima definiran jezik
+		--Svaka multimedija ima svoj jezik
+		
+3) Prava pristupa
+	--sadržaj regije je sadržaj koji pripada regiji, tj., koji je stvoren u toj regiji
+	+Content/Category regije može mijenjat Upraviteljstvo regije i Super Upraviteljstvo (Nova Eva tim)
+	--multimedija regije je multimedija koja pripada regiji, tj., koja je stvorena u toj regiji
+	+Multimediju regije može mijenjat Upraviteljstvo regije i Super Upraviteljstvo
+
+4) Keširanje sadržaja
+	--ako radimo bez višejezičnosti
+		+potrebno je keširati (backend, klijent) Content/Category za kombinaciju (kategorija, regija)
+		+dosta lakše za implementirat
+		PJESMARICA
+			-za svaku pjesmu potrebno je dodatno keširati (backend, klijent) tagove (nazivi i id-jevi - backend i frontend)
+			-EVICT i REFILL use caseovi: pri promjeni pjesme ili promjeni strukture tagova i nadtagova
+				-Promjena strukture tagova/nadtagova:
+					-EVICT i REFILL svih pjesama te regije
+				-Promjena neke pjesme (pjesme ili tagova pjesme)
+					-EVICT i REFILL te pjesme
+	--ako radimo sa višejezičnosti
+		-klijent treba keširati Content/Category za kombinaciju (kategorija, regija, jezik)
+		-backend treba keširati:
+			-Content/Category za kombinaciju (kategorija, regija)
+			-Multimediju za kombinaciju (kategorija, regija, jezik)
+		+nije neizvedivo
+	//todo: napisati EVICT,REFILL,UPDATE CACHE TREE use caseove
+		
+5) +PROBLEM Kako implementirat nazive tagova kod pjesama
+ --nazivi tagova trebaju biti u jeziku regije
+ --bez višejezičnosti:
+	--RJEŠENJE 1:
+		--poseban model za tagove i nadtagove
+			+zapravo je jednostavno implementirat preko hijerarhije foldera
+				STRUKTURA FOLDERA
+					"Songs tags"(id=500 - konstanta u app, ko za osnovne kategorije):
+						"Tags"(region=1):
+							"Misa":
+								"Ulazne"
+								"Izlazne"
+								...
+							...
+						"Tags"(region=2):
+							"Mass":
+								"Entry"
+								"Kyrie"
+				+time je riješeno keširanje, editiranje,... toga preko CMSa
+		--svaki tag/nadtag ima regiju (i jezik - nije nužno potrebno)
+		--Upraviteljstvo regije može mijenjati tagove svoje regije
+			+ Jedina alternativa jest da se nekako hardkodiraju u bazu pri stvaranju regije
+			-potrebno je implementirat poseban kod za prava pristupa nadtagovima i tagovima
+				+ BITNO možda se može pronać način da se ovo riješi bez dupliciranja koda
+					--npr., posebna library metoda koja provjerava jel korisnik ima pravo pristupa regiji
+				+ Zapravo, može se riješit tako da servis za pjesme definira uslugu 
+				"upravljanja tagovima pjesama" i da zahtjeva ovlasti "Upraviteljstvo regije", a ne "Writer"
+					-!"Writer" bi mogao zaobići ovu uslugu i direktno preko CMSa mijenjati nazive foldera unutar "Tags" foldera
+				tj., da za upravljanje tagovima pjesama
+				+sučelje za mijenjanje tih tagova se ionako treba napravit
+					+ide preko CMSa
+		-u posebnu bazu je za pjesmu potrebno spremit izabrane tagove za pjesmu
+			+ali to je ionako potrebno napravit
+			+to je minimalno informacija po pjesmi
+			-najveći problem je napravit posebno keširanje za to
+				--pitanje je hoće to bit uopće potrebno s obzirom da je to malo informacija
+				+al opet, valjda je jednostavno napravit jednostavno keširanje toga i EVICT i refill svega 
+				pri promjeni pjesme
+		--1.1 - jednostavnije
+			--tagovi i nadtagovi regije se pri stvaranju regije dupliciraju iz engleskih tagova
+				--NAJJEDNOSTAVNIJE odnosno inicijaliziraju se nekom hardkodiranom skriptom na engleske tagove
+		--1.2 - složenije
+			--tagovi i nadtagovi regije se pri stvaranju regije dupliciraju iz regije istog jezika
+												

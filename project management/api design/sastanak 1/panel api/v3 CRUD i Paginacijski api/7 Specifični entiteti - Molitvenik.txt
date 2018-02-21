@@ -1,0 +1,12 @@
+7)
+{entity}=prayers
+
+7.1)
+MOLITVENIK
+--Molitvenik ima isti API kao 3,1 (generički Content) i 3,2 (generički Category)
+--RAZLIKA je u interpretaciji i prikazu podataka
+	--kategorije se smatraju skupinama poredanih (ordered) molitava
+
+TODO
+--dodati API za ordering molitava
+--možda PANEL može koristiti (modificiranu) moju aplikaciju za unos molitava

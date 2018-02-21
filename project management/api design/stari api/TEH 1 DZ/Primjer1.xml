@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="trans.xsl"?>
+<!-- Studijski, reprezentativni primjer, pokazuje sve elemente i atribute -->
+<category id="355" title="Songs" page="1" items="10" filter="0" supercategory="27">
+
+	<!-- Reprezentativna slika kategorije -->
+	<image width="640" height="720">http://novaeva.com/datoteke/headers/Studio%233.jpg</image>
+
+	<!-- Podkategorije -->
+	<subcategories size="3">
+		<category id="452"/>
+		<category id="593"/>
+		<category id="921"/>
+	</subcategories>
+
+	<!-- Sadržaj -->
+	<contents size="1">
+		<content id="1284" primaryLanguage='5'>
+			<author>
+				1543
+			</author>
+			<category id="355"/>
+			<region primaryLanguage='5'>
+				1
+			</region>
+
+			<multimedias>
+				<multimedia language="7">
+					<!-- Tekstualni -->
+					<title role="title">Slava Bogu na visini</title>
+					<description role="description">Liturgijska</description>
+					<text role="Obicni tekst pjesme">
+						Slava Bogu na visini!
+						I na zemlji mir ljudima dobre volje.
+						Hvalimo Te. Blagoslivljamo Te, klanjamo Ti se, slavimo Te.
+					</text>
+					
+					<!-- Ostali -->
+					<audio>http://novaeva.com/datoteke/audio/2018_01_01_MarijaBOGORODICA_1sijecnja2018_B_SibalicI.mp3</audio>
+					<image width="640" height="720">https://i.ytimg.com/vi/TqmlHWbHq0c/hqdefault.jpg</image>
+					<video>https://novaeva.com/songs/video/files/Slava-Bogu-na-visini.mp4</video>
+					<link role="content link">https://novaeva.com/node/3519</link>
+				</multimedia>
+			</multimedias>
+		</content>
+	</contents>
+</category>

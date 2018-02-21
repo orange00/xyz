@@ -1,0 +1,36 @@
+Stara Shema(API) -> XML	-> Nova Shema(Baza)-> Nova Shema (API)
+
+//U referencama na Staru Shemu, category je (npr., http://novaeva.com/json?api=2&cid=354)
+//U referencama na Staru Shemu node=Content (npr., http://novaeva.com/json?api=2&nid=5536)
+//U referencama na Novi api, category je https://novaeva.xyz:9090/api/content/355?page=1  (!!!treba promjenit u /category/355)
+//kod XML-a . se odnosi na atribut, .. se odnosi na podelement
+
+//category
+category->category->category and all category content->category
+category.subcat(cid, name)->category.subcategories (ids only, no names)->category. ER subcategories (doesnt exist in db) ->!!(treba promjenit) category.subcategories(id, title)
+null->category.supercategory->category.supercategoryId->category.supercategory (id, title)
+
+category.image.original->category.image (width?, height?)->category.multimedia.image->content.multimedia[i] (type="image", link=image)
+
+//content
+node->content->content (with id content.id)
+
+//content.id znači da je id XML atribut od content
+node.nid, cid.vijesti[i].nid->content.id->content.id
+
+null->author->content.authorId?
+node.time, cid.vijesti[i].datum->created->content.created
+
+null->modifier->content.modifierId?
+null->modified->content.modified
+
+node.cid->category->content.categoryId?
+
+null->region->content.regionId?
+null->region.primaryLanguage->region.primaryLanguage?
+
+null?->tags->content (od content.id) tags
+	null?->tag->content (od content.id) tag
+	
+
+//autor na razini contenta ili multimedije ili multimedije za svaki jezik ili pojedine multimedije (audio, video) za svaki jezik?

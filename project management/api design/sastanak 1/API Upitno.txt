@@ -1,0 +1,6 @@
+audio->duration?//?koji je format? (broj sekundi?)
+--? novaeva.com/api/v0 = novaeva.com/api ili novaeva.com/api/v{trenutno aktualna verzija} = novaeva.com/api
+--format datuma?
+	--Timestamp
+	--ili ISO...
+--biranje regije na mobitelu

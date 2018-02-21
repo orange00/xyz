@@ -1,0 +1,123 @@
+4)
+{entity}=songs
+
+4.2)
+SONGCATEGORY
+--SongCategory sadrži pjesme isto kao što Category sadrži Content
+--SongCategory dodatno ima tagove("tags"), koji predstavljaju: 
+	--svi tagovi pjesama u kategoriji, kad se skupe -> kod dohvata kategorije
+	--preostali tagovi odabranih pjesama -> kod pretrage pjesama
+			
+MODEL
+
+--pri dohvatu sadržaja(pjesama i mapa) kategorije
+SongCategoryWithSubs, SongCategoryWithSubsWithSongTags
+
+SongCategoryWithSubsWithSongTags
+{
+	"tags" : SongTags,
+	"category" {
+		"features" : Content,
+		"subcategories" : [CategoryInfo],
+		"content" : [SongContent]		//!! Pjesme
+	}
+}
+SongCategoryWithSubs
+{
+	"tags" : SongTags,
+	"category" : {
+		"features" : Content,
+		"subcategories" : [CategoryInfo],
+		"content" : [ContentWithChords]		//!! Pjesme
+	}
+}
+ContentWithChords
+{
+	"chords":"<div>...Cis...</div>,
+	"content":Content
+}
+	
+	
+
+REST API
+
+--dohvat kategorije pjesme (sa pjesmama i podkategorijama)(BEZ tagova pojedine pjesme)
+--za root kategoriju pjesmarice id=0
+--paginacija za pjesme (items={broj elemenata na jednoj stranici}, page={broj stranice})
+GET
+/categories/{id}/include-subs		--npr: novaeva.com/api/v3/songs/categories/0/include-subs
+URL PARAMS: page=1 & items=20
+			&region=4
+RESPONSE
+{
+	SongCategoryWithSubs
+}
+
+--dohvat kategorije pjesme (sa pjesmama i podkategorijama)(SA tagovima pojedine pjesme)
+--za root kategoriju pjesmarice id=0
+--paginacija za pjesme (items={broj elemenata na jednoj stranici}, page={broj stranice})
+GET
+/categories/{id}/include-subs/include-tags-each-song		--npr: novaeva.com/api/v3/songs/categories/0/include-subs/include-tags-each-song
+URL PARAMS: page=1 & items=20
+			&region=4
+RESPONSE
+{
+	SongCategoryWithSubsWithSongTags
+}
+
+
+--tražilica pjesama po osnovnom queriju i tagovima; uz paginaciju
+--pretražuje pjesme odabrane regije
+--pretražuje pjesme koje sadrže query i koje sadrže sve tagove iz tag_ids
+--tagovi u tag_ids odvojeni zarezom (,)
+GET
+/songs/categories/{id}/search/include-subs
+URL PARAMS: page=1 & items=20
+			&region=4
+			&query="Tekst pretrage" & tag_ids=Ulazne,liturgijske,marijanske
+{
+	SongCategoryWithSubs
+}
+GET
+URL PARAMS: page=1 & items=20
+			&region=4
+			&query="Tekst pretrage" & tag_ids=Ulazne,liturgijske,marijanske
+/songs/categories/{id}/search/include-subs/include-tags-each-song
+{
+	SongCategoryWithSubsWithSongTags
+}
+
+
+
+--dohvat kategorije pjesama (bez podkategorija i podsadržaja)(bez tagova)
+GET
+/categories/{id}			--npr., == /songs/categories/{id}
+URL PARAMS: ?regionId={id regije}
+RESPONSE
+{
+	Category //==Content
+}
+
+--stvaranje kategorije pjesama
+POST
+/categories							--npr., == /songs/categories
+REQUEST
+{
+	CategoryWithFiles //==ContentWithFiles
+}
+--id=0 | undefined | null
+--predati odgovarajući superCategoryId i regionId i author(username) u Category
+
+--uređivanje kategorije pjesama
+PUT
+/categories/{id}					--npr., == /songs/categories/{id}
+REQUEST
+{
+	CategoryWithFiles //==ContentWithFiles
+}
+--predati odgovarajući superCategoryId i regionId i username u Category
+--"file"=undefined ako se ne mijenja multimedija
+
+--brisanje kategorije pjesama -- efektivno se brišu i podkategorije i pjesme kategorije
+DELETE
+/categories/{id}					--npr., == /songs/categories/{id}

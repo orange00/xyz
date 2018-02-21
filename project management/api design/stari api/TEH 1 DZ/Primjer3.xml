@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="trans.xsl"?>
+<!-- Realan primjer -->
+<category id="354" title="Duhovnost" page="1" items="10" filter="0" supercategory="27">
+
+	<!-- Kategorija nema reprezentativnu sliku -->
+
+	<!-- Ima više podkategorija -->
+	<subcategories size="9">
+		<category id="963"/>
+		<category id="2"/>
+		<category id="18"/>
+		<category id="964"/>
+		<category id="932"/>
+		<category id="934"/>
+		<category id="933"/>
+		<category id="931"/>
+		<category id="965"/>
+	</subcategories>
+
+	<!-- 2 sadržaja -->
+	<contents size="2">
+		<!-- Sadržaj 1 = Krunica Božanskom Milosrđu, hrvatski i engleski -->
+		<content id="5006" primaryLanguage='1'>
+			<author>
+				1821
+			</author>
+			<category id="354"/>
+			<region primaryLanguage='1'>
+				1
+			</region>
+
+			<!-- Ovaj sadrzaj ima 2 prijevoda (hrvatski i engleski) -->
+			<multimedias>
+				<!-- HRVATSKI -->
+				<multimedia language="1">
+					<title role="title">Krunica BM - NOVI PRIJEVOD, odobren od HBK</title>
+					<!-- nema opisa -->
+					<text>
+						Novi, službeni prijevod krunice Božjeg milosrđa, pjevano. Na poveznici možete naći i 
+						popratni video na YouTube kanalu VS Matheus (https://youtu.be/xRa45zBSa3Y).\n\nZahvaljujemo VS Matheus..
+					</text>
+					<!-- ima samo video -->
+					<video>https://youtu.be/xRa45zBSa3Y</video>
+				</multimedia>
+				
+				<!-- ENGLESKI -->
+				<multimedia language="2">
+					<title role="title">The chaplet of divine mercy</title>
+					<text>
+						Eternal Father, I offer you the Body and Blood, Soul and 
+						Divinity of Your Dearly Beloved Son, Our Lord, Jesus Christ, 
+						in atonement for our sins and those of the whole world..
+					</text>
+					<!-- Ima samo link -->
+					<link role="Tutorial webpage link">http://www.praydivinemercy.com/</link>
+				</multimedia>
+			</multimedias>
+		</content>
+		
+		<!-- Sadržaj 2 = audiozapis vjeronauka -->
+		<content id="1196" primaryLanguage='1'>
+			<author>
+				2222
+			</author>
+			<category id="354"/>
+			<region primaryLanguage='1'>
+				1
+			</region>
+
+			<multimedias>
+				<!-- HRVATSKI -->
+				<multimedia language="1">
+					<title role="title">1. DIO - VJERONAUK - don Bosco, Otac i učitelj mladih</title>
+					<!-- nema opisa, teksta -->
+					
+					<!-- ima samo zvučnu snimku vjeronauka -->
+					<audio>http://novaeva.com/datoteke/audio/1DIO_DonBosco_DonDamir_VJERONAUK_2014.mp3</audio>
+				</multimedia>
+			</multimedias>
+		</content>
+	</contents>
+</category>

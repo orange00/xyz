@@ -1,0 +1,97 @@
+﻿FONT
+
+Radio sam u rezoluciji 300 ppi (pixel/inch) tako da ću vam za tu rezoluciju napisati veličinu fonta u tipografskom točkama (pt - point typography).
+
+Najbolje je da kod upotrebe imate otvorene moje primjere slika za lakše snalaženje gdje koji font ide.
+
+I bilo bi dobro da je približno identično onako kako je zamišljeno ako se već veličine fonta ne poklapaju.
+
+
+______________________________________________________________________
+//////////////////////////////////////////////////////////////////////
+
+MOLITVENIK IZBORNIK (Slika: "Molitvenik.jpg")
+----------------------------------------------------------------------
+
+(Naslovi poglavlja u izborniku)
+----------------------------------------------
+FONT: 	Open Sans
+STYLE:  Regular
+SIZE:	11 pt
+COLOR: 	RGB: 37,37,37
+	Hexa: #252525
+
+
+
+
+______________________________________________________________________
+//////////////////////////////////////////////////////////////////////
+
+MOLITVENIK DRUGI DIO (Slika: "MolitvenikText.jpg")
+----------------------------------------------------------------------
+
+(Naslov poglavlja "Molitve mladih")
+--------------------------------------------------
+FONT: 	Open Sans
+STYLE:  Bold
+SIZE:	14 pt
+COLOR: 	RGB: 37,37,37
+	Hexa: #252525
+
+
+(Sadržaj potpoglavlja "1. Molitva mladića")
+--------------------------------------------------
+FONT: 	Open Sans
+STYLE:  Regular
+SIZE:	10 pt
+COLOR: 	RGB: 37,37,37
+	Hexa: #252525
+
+
+(Naslov potpoglavlja "1. Molitva mladića")
+--------------------------------------------------
+FONT: 	Open Sans
+STYLE:  Bold
+SIZE:	12 pt
+COLOR: 	RGB: 37,37,37
+	Hexa: #252525
+
+
+(Tekst "Lorem Ipsum is simply...")
+--------------------------------------------------
+FONT: 	Open Sans
+STYLE:  Regular
+SIZE:	10 pt
+COLOR: 	RGB: 37,37,37
+	Hexa: #252525
+
+
+(! Komentari "MOLI SE UMJESTO...")
+--------------------------------------------------
+FONT: 	Open Sans
+STYLE:  Italic
+SIZE:	8 pt
+COLOR: 	RGB: 37,37,37
+	Hexa: #252525
+
+
+(" Citati "Oče moj! Ako je...")
+--------------------------------------------------
+FONT: 	Open Sans
+STYLE:  Italic
+SIZE:	10 pt
+COLOR: 	RGB: 37,37,37
+	Hexa: #252525
+
+
+(\ Autor "sv. Toma Akvinski")
+--------------------------------------------------
+FONT: 	Open Sans
+STYLE:  Semibold Italic
+SIZE:	8 pt
+COLOR: 	RGB: 37,37,37
+	Hexa: #252525
+
+
+
+

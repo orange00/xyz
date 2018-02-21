@@ -1,0 +1,181 @@
+6)
+{entity}=calendar
+
+6.1)
+CALENDAR
+--Calendar predstavlja kalendar s dnevnim čitanjima (evanđelje), opisom sveca dana, brevijarom, multimedijom,... za taj dan
+--Klijenti dohvaćaju određeni raspon dana te multimediju za svaki pojedini dan
+			
+MODEL
+--model Calendara je (gotovo) u potpunosti različit od modela Contenta
+
+Calendar 
+{
+    "weeks": [
+        {
+            "startDate": "",
+            "liturgicalWeek": 21,
+            "liturgicalTime": 3
+        },
+        {
+            "startDate": "",
+            "liturgicalWeek": 24,
+            "liturgicalTime": 5
+        }
+    ],
+    "days": [
+        "2017-03-23": {
+            "colour": 4,
+            "saints": ["sv. Ivan Bosco"],
+            "solemnity": "Ime Isusovo",
+            "feastDay": null
+        },
+        "2017-03-23": {
+            "colour": 2,
+            "saints": ["sv. Ivan Bosco"],
+            "solemnity": null,
+            "feastDay": "sv. Josip"
+        }
+    ]
+}
+
+Multimedia
+{
+	//Will be undefined
+	"text":"Ovo je tekst",
+	//Will be undefined
+	"html": "<div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><div style=\"word-wrap: break-word; width: 100%; overflow: hidden;\"><p>»Jer gdje su dvojica ili trojica sabrana u moje ime, tu sam i ja među njima.« (Mt 18,20 ) <br> Meditacija za sljedeću XXIII. nedjelju kroz godinu!<br><br></p></div></div>",
+	//Will be undefined
+	"title": "XXIII. NEDJELJA KROZ GODINU (A) - Lectio Divina s Don Boscom",
+	//Will be undefined
+	"description": "Lectio Divina s Don Boscom",
+
+	"audio": [
+		{
+			"title": "",
+			"link": "",
+			"duration": "" //?koji je format? (broj sekundi?)
+		},
+		{
+			"title": "",
+			"link": "",
+			"duration": ""
+		}
+	],
+	"documents": [
+		{
+			"title": "",
+			"link": "",
+			"type": "pdf|word|..." 	//prijedlog? (opcionalno polje type) +informacija o vrsti dokumenta (trenutno se prikazuje txt za sve dokumente) -- treba smislit konstante za konkretne tipove --treba uskladit Kalendar api (ili verzioniranje)
+		},
+		{
+			"title": "",
+			"link": "",
+			"type": ""
+		}
+	],
+	"images": [
+		{
+			"title": "",
+			"link": ""
+		},
+		{
+			"title": "",
+			"link": ""
+		}
+	],
+	"video": [
+		{
+			"title": "",
+			"link": ""
+		},
+		{
+			"title": "",
+			"link": ""
+		}
+	],
+	"links": [
+		{
+			"title": "Web stranica HBK",
+			"link": "http://www.hbk.hr/"
+		},
+		{
+			"title": "",
+			"link": ""
+		}
+	]
+}
+--za parsiranje multimedije kod Kalendara se može koristiti 
+isti model Multimedia kao i kod Contenta, samo što će kod 
+Kalendara atributi text, title, html i description biti undefined
+
+
+
+REST API
+KALENDAR
+=======================REQUEST=======================
+//Calendar request
+//TODO: Embed arguments in URL
+GET /			->	/calendar
+URL PARAMS:?startDate=2017-03-23
+    &endDate=2017-03-23
+}
+=======================RESPONSE======================
+{
+    "weeks": [
+        {
+            "startDate": "",
+            "liturgicalWeek": 21,
+            "liturgicalTime": 3
+        },
+        {
+            "startDate": "",
+            "liturgicalWeek": 24,
+            "liturgicalTime": 5
+        }
+    ],
+	//koristiti Map ili Dictionary zbog dinamičkih ključeva
+    "days": [
+        "2017-03-23": {
+            "colour": 4,
+            "saints": ["sv. Ivan Bosco"],
+            "solemnity": "Ime Isusovo",
+            "feastDay": null
+        },
+        "2017-03-23": {
+            "colour": 2,
+            "saints": ["sv. Ivan Bosco"],
+            "solemnity": null,
+            "feastDay": "sv. Josip"
+        }
+    ]
+}
+	
+//Readings request
+GET /{date}/readings		-> ie.	/calendar/{date}/readings
+=======================RESPONSE======================
+{
+    "ligurgicalYear": "A",
+    "readings": [
+        {
+            "readingType": 2
+            "bibleVerse": "",
+            "theme": "",
+            "text": ""
+        },
+        {
+            "readingType": 2
+            "bibleVerse": "",
+            "theme": "",
+            "text": ""
+        }
+    ]
+}
+
+=======================REQUEST=======================
+//Media request
+GET /{date}/media
+=======================RESPONSE======================
+{
+	Multimedia
+}

@@ -1,0 +1,133 @@
+Napravit prijedlog dizajna apija za:
+	-URL + metode
+		-generic
+			-Content
+			-Category
+			-Category/Changes
+			-Category/Search
+			-Dinamički CSS za tekstove (na razini aplikacije ili kategorije??)
+		-specific
+			-npr: 
+				Duhovnost Content
+				Duhovnost Category
+				Duhovnost Changes
+			-npr:
+				Songs Content
+				Songs Category
+				Songs Changes	
+				Songs/Search
+			-npr:
+				Molitvenik
+			-npr: 
+				Pozadinska slika aplikacije
+					--i u changes
+		-Panel
+			--napravit mock ekrane -> poslat Radaku na procjenu
+		-Baza
+			--napravit CMS model (ER) i poslat Miroslavu na procjenu
+		-napravit sliku arhitekture
+			--sve po mikroservisima
+			--objasnit da je zbog toga /songs, /spirituality, /...
+		-dobro dokumentirat api
+			--tipa koji su propertyji optional, koji nisu, ...
+		-Upravljanje regijama ?
+			--unutar UserManagementServisa?
+			--upravljanje regijama je usko vezano uz upravljanje pravima pristupa
+				--kad se stvara regija, automatski se stvara stog upravljačkih korisnika te regije
+		-Wrap oko vanjskih servisa
+			-npr: 
+				Kalendar?
+					-poslat mejl Šibi i Branimiru da mi pošalju:
+						-trenutno dogovoreni api oko kalendara
+						(json specifikacija + URLovi?)
+						-jel implementiran ikakav servis za taj api?
+					-!!dizajnirat prijedlog za integraciju tog apija 
+					u novi api:
+						-cilj je da ja implementiram Calendar/Changes na sličan način kao 
+						i za sve ostalo
+						-cilj je da api ima isti oblik za kalendar kao i za sve ostalo:
+							-bar HTTPS i autentifikacija
+							-bar URL i parametri (straničenje, filteri,...)
+							-po mogućnosti i json 
+		-verzioniranje APIja (APIstatus)
+			-http://www.baeldung.com/rest-versioning
+			-https://stackoverflow.com/questions/389169/best-practices-for-api-versioning
+			-https://www.google.hr/search?ei=a9RcWtqKA4_asAfclIzgAg&q=rest+api+versioning&oq=rest+api+versioning&gs_l=psy-ab.3...552008.553818.0.553933.0.0.0.0.0.0.0.0..0.0....0...1c.1.64.psy-ab..0.0.0....0.2OoBKIZDt4E
+		-autentifikacija
+			-Basic Authentification
+			-OAUTH: http://www.baeldung.com/spring-security-5-oauth2-login?utm_content=buffer0c602&utm_medium=social&utm_source=facebook.com&utm_campaign=buffer
+		-Buduća proširivost sustava
+			-npr., definirati točke u sustavu u kojima se dodaju nove stvari
+				--dobro definirati i dokumentirati te točke, te omogućiti lagano dodavanje (hook) novih stvari, bez puno veze sa postojećim stvarima/bez puno poznavanja postojećih stvari
+		-Access Control
+			--definirati kako će se ovo raditi na serveru
+		-plugin arhitektura
+			--izguglat/proučit/vidjet kako bi se ovo uklopilo
+			--ideja je da se na backendu novi mikroservisi mogu ubacit ko plugini
+			
+						
+					
+	-URL i parametre
+		-parametri: paginacijski, filter, tagovi, regija?, jezik?
+	-json strukturu*
+		-za neku generičku kategoriju (tipa Duhovnost)
+		-za neku koja je generic + specific (npr., Pjesme i Molitvenik)
+		-uključit Markov prijedlog gdje json sadržava tip
+		-za /changes - analiza + json
+			-generic + pjesmarica
+			-analizirat razdvajanje/spajanje foldera i contenta
+	-odredit koje će kategorije početno biti generičke,
+	a koje ne
+
+Napravit argumentaciju za:
+	-razdvajanje urlova (??dobar primjer je dinamički css kod molitvenika)
+		-argumenti:
+			-odličan argument je trazilica (/search) kod pjesmarice (kako drugačije implementirat tražilicu po tagovima)
+			-kako drugačije u JSON API ubacit tagove pojedine pjesme (jer tagovi imaju neku svoju složenu strukturu;tj., nisu jednostavni tagovi)
+			-
+		-napravit razdvajanje URLova za neku kategoriju tek u trenutku kad to postane potrebno?
+			-sad bi to onda napravili za pjesmaricu, kalendar i izreke
+			-a ostale stvari bi se dohvaćale preko /category/id
+			-argumentacija: 
+				-ne kompliciramo unaprijed (možda se neke kategorije neće ni nadogradit)
+				-jednostavnije frontend timu (posebne stvari moraju implementirat samo za 3 kategorije)
+				-jednostavnije backend timu (ne moramo radit "dummy" (samo prosljeđuju) servise za generičke kategorije)
+	-razdvajanje specifičnog i generičkog dijela
+	-višeregionalnost/višejezičnost
+	-svaka kategorija svoj CSS;+ jedan defaultni CSS za aplikaciju
+		-sve generičke kategorije imaju istu podatkovnu strukturu
+		-jednostavno stiliziranje teksta pojedine kategorije (samo promjena CSS parametara)
+			-(hoće to bit jednostavno? pretvorit tekstove u HTML)?
+			-jel se trenutno koristi HTML ili neHTML tipa za čitanja i ostale tekstove?
+		-omogućava jedinstveno stiliziranje svih kategorija i specifično stiliziranje pojedine kategorije
+		-jednostavno stiliziranje teksta na svim platformama (Android, Win10, Iphone, Web)
+			-i jedinstveno (na jednom mjestu, jedinstven izgled po svim platformama)
+	-spajanje/razdvajanje Content i Category u APIju i u bazi (posebno za /Changed)
+		-ne može se jedno spojit a drugo razdvojit, zbog id-jeva u bazi?
+		-al generalno mi se čini da su to 2 razdvojena koncepta
+			-koriste se na različit način
+				+to se ponašanje na razl. način možda može postići tako da se pamti type (content, category) u bazi
+		+za API, posebno za /Changed ima smisla spojiti, jer je lakše njima obradit, a ista je struktura
+		+u bazi su brojne stvari iste (tipa autori, modified, reprezentivna multimedija, default jezik, regija?)
+			-ali i neke stvari različite (hijerarhija)
+			+no zapravo svaki content i svaka kategorija ima nadkategoriju, tako da to i nije toliko različito
+			+Možemo napravit da je sve isto kod Content i Category, samo da ima oznaku type="CONTENT" ili type="CATEGORY"
+		
+		
+	
+Napravit mejl poziv na raspravu o API-ju
+	-uputit mejl:
+		-Šibi
+		-Branimiru
+		Klijenti
+			-Vedranu/Marku
+			-Radaku
+			-napomenut u mejlu šibi da proslijedi ostalim frontedašima
+		Backend
+			-onima koji rade na API servisima za kalendar
+			-		
+	-u mejlu poslat:
+		-prijedlog apija
+		-argumentaciju
+		-prijedlog termina sastanka za raspravu
+		
