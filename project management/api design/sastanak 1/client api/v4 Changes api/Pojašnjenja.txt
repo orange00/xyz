@@ -1,0 +1,129 @@
+POČETNA IDEJA
+Početna ideja (ANDROID TIM) je bila da klijenti keširaju sav sadržaj svih entiteta i kategorija nakon 
+što ih korisnik otvori po prvi put (npr., kešira se čitav duhovnost->Lectio Divina pri prvom otvaranju mape Lectio Divina)
+
+Pri naknadnom otvaranju entiteta/kategorije(npr., duhovnost->Lectio Divina) samo bi se sa servera zatražile promjene u entitetu/kategoriji 
+od datuma zadnjeg otvaranja tog entiteta/kategorije.
+
+Nakon što server vrati promjene, one bi se primjenile na keš u klijentu i time bi keš u klijentu postao sinkroniziran s poslužiteljem,
+te korisnik vidi ispravne podatke.
+
+Changes API(v4) je dizajniran kako bi podržao ovu ideju.
+Početna ideja se može u potpunosti implementirati upotrebom Changes APIja(v4).
+
+IMPLEMENTACIJA POČETNE IDEJE UPOTREBOM Changes APIja(v4)
+--na klijentu se u bazi čuva keš za sadržaj
+--ulaskom u pojedinu kategoriju zove se odgovarajući /changes URL 
+	--npr., novaeva.com/api/v3/spirituality/categories/483/changes/{date} za dohvat promjena u Duhovnost->Lectio Divina od zadanog datuma
+--keš se sinkronizira podacima sa servera
+--ispravni podaci se prikažu korisniku
+
+PROBLEMI POČETNE IDEJE
+(NE)SKALABILNOST
+Ideja je generalno jako dobra, ali je neskalabilna. 
+	--već pri trenutnom stanju (bez proširenja novim regijama) se na poslužitelju nalazi više GB podataka
+Ideja zahtjeva dohvat čitave kategorije odjednom sa poslužitelja, pri prvom otvaranju kategorije. Za svaki mobitel -> preopterećenje poslužitelja, presporo za prvi dohvat
+	--alternativa je da se "dohvat čitave kategorije odjednom sa poslužitelja, pri prvom otvaranju kategorije" 
+	implementira tako da server ponudi paginaciju za /changes, te da poslužitelj dohvati sve promjene za kategoriju tako da 
+	asinkrono dohvaća stranicu po stranicu promjena sa poslužitelja
+		--i dalje je problem neskalabilnost
+		--i dalje veliko opterećenje servera, premda se može raspodijeliti kroz veće vremensko razdoblje kroz asinkrone pozive sa klijenta
+		--Komplikacije u implementaciji
+			--straničenje za /changes -> ?komplicirano na poslužitelju
+			--asinkrona sinkronizacija keša -> komplicirano na klijentu
+		--neće radit ako se za vrijeme sinkronizacije doda/promjeni/izbriše neka vijest
+		--upitno hoće li radit dovoljno brzo/dobro,...
+		--jako rizično
+
+FINALNA IDEJA
+-Nedostatak: debeli klijent, duplikacija koda po klijentima
+--keširaju se SVE(NUŽNO) podkategorije (iz prve stranice)
+--kešira se određeni broj (npr., 1000) vijesti po entitetu(npr., duhovnost, pjesme)
+	--*kada se stigne nova vijest za keširanje (kroz pagination ili changes) ona se kešira;
+		--ako je keš za entitet pun, mora se neka druga vijest izbaciti iz keša
+			SIMULACIJA LRU po vijestima -> ideja je npr., da netko tko koristi samo Lectio Divina može iskeširat čitav Lectio Divina i da to ima prednost nad Duhovnost, premda je Duhovnost više u hijerarhiji kategorija i Lectio Divina vijesti mogu biti starije,..
+			--vijest stigla kroz changes->NEW ili kroz pagination
+				--izbacuje se najstarija vijest (modified) iz keša; prvo iz svih ostalih kategorija, a tek onda iz trenutne kategorije; kod izbacivanja iz trenutne kategorije vijest koja se izbacuje mora biti starija od vijesti koja se ubacuje(inače se keš ne mijenja);
+--kad korisnik odscrolla do nekeširanih vijesti, zove se paginacijski api (v3); njegovi rezultati se onda keširaju ako ima mjesta u kešu
+	--pri prvom otvaranju kategorije je to odmah pri otvaranju (odmah pri prvom otvaranju kategorije se zove paginacijski (v3) api za prvu stranicu)
+--pri otvaranju kategorije se (osim pri prvom otvaranju) zove /changes sa datumom zadnjeg otvaranja uz zvanje /changes ili datum prvog otvaranja te kategorije
+	--promjene se primjene na keš
+		--NEW vijesti se dodaju u keš prema *	-> vijest se zažuti korisniku dok je ne otvori
+		--CHANGED vijesti se NE dodaju u keš (zbog poretka za paginaciju); JEDINO ako su prisutne u kešu, zamijeni se stara verzija vijesti sa novom u kešu
+		--DELETED vijesti se uklone iz keša
+		
+		--NEW podkategorije se dodaju u keš podkategorija	-> kategorija se zažuti korisniku dok je ne otvori
+		--CHANGED podkategorije moraju biti prisutne u kešu;zamijeni se stara verzija vijesti sa novom u kešu		-> kategorija se zažuti korisniku dok je ne otvori
+		--DELETED podkategorije se uklone iz keša
+--korisniku se u listi prikazuju
+	--na vrhu keš za kategoriju (u kešu su uvijek najnovije vijesti za kategoriju)
+	--ispod vijesti dohvaćene paginacijom, ali za koje nema mjesta u kešu
+		--to je standardni prikaz vijesti paginacijom
+PREDNOSTI:
+	--relativno "jednostavno" za impl.,
+	--brzo, malo prometa, malo opterećenje servera, skalabilno, jako kvalitetno rješenje
+
+
+IMPLEMENTACIJA za GENERIČKE KATEGORIJE
+--zasebne tablice za keširanje Contenta(vijest) i podkategorija(CategoryInfo)
+	--keširaju se sve podkategorije
+	--keširaju se featuri i zadnji datumi za sve kategorije
+	--kešira se dio Contenta(vijesti)
+KLIJENTSKA INFRASTRUKTURA ZA CLIENT SIDE CACHING
+--Tablica za keširanje podkategorija
+	--potrebno pamtiti: entitet, regija, nadkategorija, CategoryInfo
+	--keširaju se sve podkategorije jedne nadkategorije
+--Tablica za keširanje Contenta
+	--potrebno pamtiti: entitet, regija, nadkategorija, Content
+	--određeni broj vijesti se kešira po entitetu (npr., 1000)
+	--regija je potrebna jer se vijesti dohvaćaju iz keša za točno određenu regiju
+	--nadkategorija je potrebna jer se pri upravljanju kešom (dodavanje, izbacivanje) za sadržaj traži kategorija sadržaja i kategorije kojima sadržaj ne pripada
+--Tablica zadnjih datuma i featurea kategorije
+	--atributi: regija, entitet, kategorija, datum zadnjeg zvanja changes za kategoriju ili datum prvog otvaranja kategorije, features kategorije
+IMPLEMENTACIJA za Pjesmaricu
+--zasebne tablice za keširanje Pjesama(vijest) i podkategorija(CategoryInfo)
+	ZA PAGINATION
+	--keširaju se sve podkategorije		- ISTO kao za generički, može se koristiti ista tablica
+	--keširaju se featuri i zadnji datumi za sve kategorije	- ISTO kao za generički, može se koristiti ista tablica
+	--kešira se dio Pjesama(vijesti)
+	ZA SEARCH BY TAGS
+	--keširaju se pjesme pojedine kategorije za pojedinu kombinaciju tagova
+	--keširaju se preostali tagovi pojedine kategorije za pojedinu kombinaciju tagova
+KLIJENTSKA INFRASTRUKTURA ZA CLIENT SIDE CACHING
+--Tablica za keširanje podkategorija	- ISTO kao za generički, može se koristiti ista tablica
+	--potrebno pamtiti: entitet, regija, nadkategorija, CategoryInfo
+	--keširaju se sve podkategorije jedne nadkategorije
+--Tablica za keširanje Pjesama			-SKORO ISTO kao za generički, možda se može koristiti ista tablica
+	--potrebno pamtiti: entitet, regija, nadkategorija, SongContent
+	--određeni broj vijesti se kešira po entitetu (npr., 1000)
+	--regija je potrebna jer se vijesti dohvaćaju iz keša za točno određenu regiju
+	--nadkategorija je potrebna jer se pri upravljanju kešom (dodavanje, izbacivanje) za sadržaj traži kategorija sadržaja i kategorije kojima sadržaj ne pripada
+--Tablica zadnjih datuma i featurea kategorije - ISTO kao za generički, može se koristiti ista tablica
+	--atributi: regija, entitet, kategorija, datum zadnjeg zvanja changes za kategoriju ili datum prvog otvaranja kategorije, features kategorije
+ZA SEARCH BY TAGS
+	--Tablica za keširanje pjesama pojedine kategorije za pojedinu kombinaciju tagova
+		--atributi: region, (pjesme), nadkategorija, kombinacija tagova, Song
+	--Tablica za keširanje preostalih tagova pojedine kategorije za pojedinu kombinaciju tagova
+		--atributi: region, (pjesme), kategorija, kombinacija tagova, tag:nadtag
+IMPLEMENTACIJA za Kalendar
+	--zasebna priča
+
+
+RIZIČNOST
+Changes API(v4) je i dalje jako rizičan iz perspektive brzine APIja (posebno za neke URLove), skalabilnosti, mogućnosti proširivosti, dizajna APIja, previđenih grešaka u APIju, kompleksnosti implementacije,..
+Potrebno ga je istestirati i ostaviti prostor za mogućnost da će se odustati od keširanja na klijentu.
+
+PRIJEDLOG ZA PLAN IMPLEMENTACIJE I TESTIRANJA APIja
+BACKEND će implementirati prvo Pagination v3 API, pa tek onda Changes v4 API za generičke kategorije
+FRONTEND
+2 ili 3 tima implementiraju Pagination API (v3): Panel, WinPhone, (iOS)
+1 ili 2 tima implementiraju Changes v4 API FINALNU IDEJU za GENERIČKE entitete u po 2 faze: Android, (iOS)
+	--ANDROID
+		--prvo Changes v4 API
+		--onda Pagination v3 API i FINALNU IDEJU
+	--iOS
+		--prvo Pagination v3 API
+		--onda Changes v4 API i FINALNU IDEJU
+IMPLEMENTACIJU CLIENT SIDE CACHINGa za PJESMARICU (API v4.4 (Songs Changes API)) odgađamo
+	--Cilj je prvo vidjeti hoće li to biti zadovoljavajuće, koliko će biti brzo/kompleksno za implementirati 
+	na GENERIČKIM kategorijama, pa tek onda prelazimo na pjesmaricu, Kalendar,...

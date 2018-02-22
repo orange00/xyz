@@ -1,6 +1,15 @@
 audio->duration?//?koji je format? (broj sekundi?)
 --? novaeva.com/api/v0 = novaeva.com/api ili novaeva.com/api/v{trenutno aktualna verzija} = novaeva.com/api
+--verzioniranje apija ?= novaeva.com/api/v{broj verzije}
 --format datuma?
 	--Timestamp
 	--ili ISO...
 --biranje regije na mobitelu
+--pristup implementaciji CLIENT SIDE CACHINGa
+
+
+
+FUTURE
+-Molitvenik API razradit do kraja
+-implementacija backenda za API v4.4 (Songs Changes API)
+-implementacija klijenata za API v4.4 (Songs Changes API)

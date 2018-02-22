@@ -1,0 +1,58 @@
+3)
+--generički entiteti
+{entity}=multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers
+
+3.2)
+CategoryChanges
+--promjene u kategoriji od zadanog datuma
+	--podsadržaj i podkategorije
+
+MODEL
+
+CategoryChanges
+{	
+	//informacije, title, description, multimedija trenutne kategorije (što se promijenilo)
+	"features" : {Content},
+	"content": 
+	{
+		"new": 
+		[
+			Content,...
+		],
+		"changed": 
+		[
+			Content,...
+		],
+		"deleted": 
+		[
+			Content,...
+		]
+	},
+	"subcategories": 
+	{	--SubcategoriesChanges
+		"new": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"changed": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		],
+		"deleted": 
+		[
+			CategoryInfo, {"id":20, "title":"Duhovnost"},...
+		]
+	}
+}
+
+
+REST API
+
+--dohvat promjena u sadržaju i podkategorijama i featurima kategorije 
+od zadanog datuma
+/categories/{id}/changes/{date}
+URL PARAMS: &region=4 
+RESPONSE
+{
+	CategoryChanges
+}

@@ -1,0 +1,30 @@
+2)
+{entity}=administration
+
+2.1)
+--REGIJE
+--Regija je poseban kanal u aplikaciji (npr., za Sloveniju, Hrvatsku,..)
+--Regija ima svoj sadržaj(Content) i kategorije(Category) za svaki entitet(songs|multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers|calendar)
+--Regija ima stog upravljackih korisnika s razlicitim pravima pristupa nad regijom i sadržajem regije
+
+
+Region
+{
+	"id" : 1,
+	"title":"Hrvatska salezijanska provincija",
+	"description" : "Salezijanci SDB Hrvatska"
+}
+
+--dohvat svih regija
+GET
+/regions
+RESPONSE
+[Region,...]
+
+--dohvat regije (osnovnih informacija)
+GET
+/regions/{id}
+RESPONSE
+{
+	Region
+}

@@ -1,0 +1,39 @@
+4)
+{entity}=songs
+
+4.3)
+SONGTAGS
+--dvorazinski tagovi pjesama
+	--npr:
+		--VRSTA
+			--Liturgijska
+			--Worship
+		--Prigoda
+			--Misa
+			--Klanjanje
+--svaka regija može definirati vlastite tagove pjesama
+			
+MODEL
+
+--koristiti Map<String,String> ili Dictionary<String,String> za parsiranje, zbog dinamickih kljuceva
+SongTags
+{
+	"SongSupertagTitle":["SongTagTitle1","SongTagTitle2",...],
+	"Prigoda":["Misa","Klanjanje","Pomirenje",..],
+	...
+}
+	
+	
+
+REST API
+
+--SONG TAGS
+
+--dohvat definiranih tagova pjesama neke regije
+GET
+/songs/tags
+URL PARAMS: region=4
+RESPONSE
+{
+	SongTags
+}

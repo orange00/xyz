@@ -85,15 +85,26 @@ proučiti definirani Model.
 
 MEJL 2
 
-UPOTREBA PAGINACIJSKOG APIja
-Možda nisam bio najjasniji kako se točno koristi Paginacijski API(v3) (što je zapravo najbitnija stvar :D).
+UPOTREBA PAGINACIJSKOG APIja(v3)	- privitak 3,2
+Možda nisam bio najjasniji kako se točno koristi Paginacijski API(v3) (što je zapravo najbitnija stvar :D). Tako da ću objasniti na primjerima.
 
+API v3 se koristi slično kao i trenutni (API v2) api. 
+Samo se kod API v2 dohvaća po 20 vijesti starijih od zadanog datuma, 
+dok se kod Paginacijskog v3 APIja dohvaća stranica 
+po stranica, pri čemu se samo predaje broj stranice(page={broj stranice}).
+
+Još je bitna razlika da API v3 poznaje REGIJE, dok ih API v2 ne poznaje. 
+Regiju na neki način (moramo dogovoriti) bira korisnik i u svakom zahtjevu se predaje regionId.
+
+DETALJNIJE UPOTREBA PAGINACIJSKOG APIja(v3)
 Dakle, zamislimo aplikaciju na mobitelu. 
 Kad korisnik otvori (klikne na) pojedini entitet (root kategorija: pjesmarica|multimedija|duhovnost|izreke|propovijedi|aktualno|poziv|odgovori|molitvenik|kalendar|generalno)
-ili neku kategoriju (mapu), prvo se uputi HTTP GET zahtjev za prvom stranicom:
-GET novaeva.com/api/v3/{entity}/categories/{categoryId}/include-subs?page=1&items={broj vijesti na stranici}
+ili neku kategoriju (mapu), prvo se uputi HTTP GET zahtjev za prvom stranicom odabrane kategorije:
+GET novaeva.com/api/v3/{entity}/categories/{categoryId}/include-subs?page=1&items={broj vijesti na stranici}&regionId={odabrana regija}
 
-Neka je {broj vijesti na stranici}=20. Ovaj parametar je dan slobodno na implementaciju klijentu. A može se i izostaviti, u kojem slučaju se vraća DEFAULT=20 vijesti.
+Neka je {broj vijesti na stranici}=20. Ovaj parametar je dan slobodno na odabir klijentu. A može se i izostaviti, u kojem slučaju se vraća DEFAULT=20 vijesti.
+Neka je regionId=1. Što odgovara Hrvatskoj.
+Za root svakog entiteta {categoryId}=0. Sve ostale mape unutar entiteta imaju "konkretni" categoryId.
 
 Pri prvom pozivu se dohvaća prva stranica. 
 Prva stranica uvijek sadrži SVE podkategorije (mape) tražene kategorije 
@@ -101,5 +112,82 @@ i prvih (najnovijih) 20 vijesti.
 
 Mobitel treba kao i do sad prikazati tih 20 vijesti i sve kategorije (mape) u listi. 
 
-Kako korisnik scrolla prema dolje, kada dođe do zadnje učitane vijesti (ili kategorije), dohvaća se sljedeća stranica:
-GET novaeva.com/api/v3/{entity}/categories/{categoryId}/include-subs?page=1&items={broj vijesti na stranici}
+Kako korisnik scrolla prema dolje, kada dođe do zadnje učitane vijesti (ili kategorije), dohvaća se sljedeća stranica (sljedećih 20 vijesti):
+GET novaeva.com/api/v3/{entity}/categories/{categoryId}/include-subs?page=2&items=20&regionId=1
+
+Pa sljedeća(sljedećih 20 vijesti):
+GET novaeva.com/api/v3/{entity}/categories/{categoryId}/include-subs?page=3&items=20&regionId=1
+
+Pa sljedeća(sljedećih 20 vijesti) itd.
+
+SAMO prva stranica (page=1) sadrži podkategorije i na prvoj stranici se uvijek vraćaju SVE kategorije.
+Ostale stranice sadrže samo vijesti (Content).
+
+
+UPOTREBA PAGINACIJSKOG APIja(v3) za PJESMARICU	- privitak 4,2
+API v3 za pjesmaricu se koristi isto kao i za API v3 za ostale entitete, uz dodatak prikaza tagova.
+
+Dakle, pri ulazu u pjesmaricu ili neku kategoriju (mapu) unutar pjesmarice 
+dohvati se prva stranica, 
+odnosno prvih 20 pjesama, SVE kategorije(mape) unutar odabrane kategorije(mape) i SVI tagovi odabrane kategorije:
+GET novaeva.com/api/v3/songs/categories/{categoryId}/include-subs?page=1&items=20&regionId=1
+
+Prikaz je sličan kao i za ostale entitete. Prikaže se 20 vijesti, SVE kategorije (mape) i onda sve ostale vijesti.
+Dodatno, na vrhu ekrana se dvorazinski prikažu svi tagovi (dizajn je na slikama u privitku).
+
+Kako korisnik scrolla, dohvaćaju se i ostale stranice, koje sadrže samo 20 po 20 vijesti, a NE sadrže tagove ni kategorije (mape):
+GET novaeva.com/api/v3/songs/categories/{categoryId}/include-subs?page=2&items=20&regionId=1
+GET novaeva.com/api/v3/songs/categories/{categoryId}/include-subs?page=3&items=20&regionId=1
+
+
+DODATNO ZA PJESMARICU - Pretraga po tagovima uz paginaciju
+Dodatno, korisnik koristi pjesmaricu tako da klikće pojedine tagove, pri čemu želi pretraživati trenutnu kategoriju unutar pjesmarice za neku KOMBINACIJU TAGOVA (vidi slike).
+
+Pri tom se također šalju PAGINACIJSKI zahtjevi, koji se obrađuju na isti način kao i paginacijski zahtjevi za sadržaj kategorije pjesmarice. 
+Samo se zahtjevi šalju na URL za pretragu pjesmarice. 
+
+Dakle, ako je korisnik pritisnuo na VRSTE PJESAMA -> Šansone, šalje se
+/songs/categories/{categoryId}/search/include-subs?page=1&items=20&regionId=1&tag_ids=Šansone	->	dohvat prvih 20 Šansona, te SVIH preostalih tagova svih Šansona
+/songs/categories/{categoryId}/search/include-subs?page=2&items=20&regionId=1&tag_ids=Šansone	->	dohvat sljedećih 20 Šansona, ne vraćaju se preostali tagovi (isti kao gore)
+/songs/categories/{categoryId}/search/include-subs?page=3&items=20&regionId=1&tag_ids=Šansone	->	dohvat sljedećih 20 Šansona, ne vraćaju se tagovi (isti kao gore)
+...
+
+Ako korisnik dalje pritisne na Dječje, izabrao je (Šansone, Dječje) i šalje se zahtjev:
+/songs/categories/{categoryId}/search/include-subs?page=1&items=20&regionId=1&tag_ids=Šansone,Dječje	->	dohvat prvih 20 Dječjih Šansona, te SVIH preostalih tagova svih Dječjih Šansona
+/songs/categories/{categoryId}/search/include-subs?page=2&items=20&regionId=1&tag_ids=Šansone,Dječje	->	dohvat sljedećih 20 Dječjih Šansona, ne vraćaju se preostali tagovi (isti kao gore)
+/songs/categories/{categoryId}/search/include-subs?page=3&items=20&regionId=1&tag_ids=Šansone,Dječje	->	dohvat sljedećih 20 Šansona, ne vraćaju se preostali tagovi (isti kao gore)
+...
+
+Itd. Dozvoljena je proizvoljna kombinacija tagova (Npr., Šansone, Marijanske, Dječje). Tagovi su u zahtjevu razdvojeni delimiterom (,), odnosno zarezom.
+
+
+PRETRAGA PO QUERYju
+Također, podržana je i standardna pretraga po nizu znakova, odnosno queryju. 
+
+Pretraga kategorije entiteta se također obavlja Paginacijski i funkcionira identično kao gore opisani dohvat kategorije entiteta.
+Jedino je URL različit:
+novaeva.com/api/v3/{entity}/categories/{id}/search/include-subs?page=1&items={broj vijesti na stranici}&regionId={odabrana regija}
+
+Preporuka je kod pretrage izostaviti items, koji je za pretragu DEFAULT=200.
+Ideja je da se pretraga u najvećem broju slučajeva obavi odjednom, bez da se server nepotrebno opterećuje sa paginacijom rezultata pretrage.
+
+
+KALENDAR
+Kalendar je potpuno specifičan i koristi se na potpuno drugačiji način. 
+Ovo ćemo proći uživo. A tu će mi morati pomoći Radak i Šibalić, budući da ja ne implementiram 
+kalendar, pa nisam baš 100% siguran kako funkcionira. 
+
+
+Na sastanku ćemo još ovo proći uživo i možete pitati sve što je nejasno, dati prijedloge, kritike,...
+Također, proći ćemo i ostatak APIja v3, po privitcima koje sam vam poslao (koji predstavljaju nekakvu tehničku 
+specifikaciju APIja).
+
+
+Prijedlog APIja za keširanje na klijentu (v4), upute i objašnjenja šaljem naknadno.
+
+
+MEJL 3
+
+GENERAL -> CHANGES
+
+IZREKE -> RANDOM

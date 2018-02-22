@@ -1,0 +1,25 @@
+1)
+/ = novaeva.com/api/v{broj_verzije}/{entity}
+{broj_verzije}=3
+
+--Entitet kojem se pristupa. Sve mogućnosti->Redom: pjesmarica|multimedija|duhovnost|izreke|propovijedi|aktualno|poziv|odgovori|molitvenik|kalendar|general|administracija(za regije)
+{entity} = songs|multimedia|spirituality|proverbs|sermons|current|vocation|answers|prayers|calendar|general|administration
+
+
+1.1) GENERAL 
+{entity}=general
+
+REST API
+
+--bivši indicators
+--osnovna notifikacija o promjenama - ima li bilo kakvih promjena u root kategorijama od zadanog datuma
+--polje "entities" vraća SIMBOLIČKU KONSTANTU onih entiteta kod kojih ima promjena od zadanog datuma
+GET
+/changes/{date}			//ie. novaeva.com/api/v3/general/changes/{date}
+RESPONSE
+{
+	"entities": [SONGS,MULTIMEDIA,SPIRITUALITY,PROVERBS,SERMONS,CURRENT,VOCATION,ANSWERS,PRAYERS,CALENDAR],
+	"backgroundImage" : "https://www.images.com/image1.png",
+	"css" : "https://www.novaeva.com/css/css0.css"
+}
+
